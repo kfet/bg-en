@@ -110,7 +110,7 @@ assert(enBg.entries.length >= 40000,  `en-bg has ≥40k entries (got ${enBg.entr
 assert(bgEn.entries.every(e => Array.isArray(e) && e.length === 4), "all bg-en entries are [4]")
 assert(enBg.entries.every(e => Array.isArray(e) && e.length === 4), "all en-bg entries are [4]")
 
-const validPos = new Set(['n', 'prop.n', 'v', 'adj', 'adv', 'prep', 'part', 'num', ''])
+const validPos = new Set(['n', 'prop.n', 'v', 'adj', 'adv', 'prep', 'part', 'num', 'interj', 'pron', 'conj', 'det', ''])
 const badPos = bgEn.entries.map(e => e[3]).filter(p => !validPos.has(p))
 assert(badPos.length === 0, `all POS values are valid (unexpected: ${JSON.stringify(badPos.slice(0,5))})`)
 

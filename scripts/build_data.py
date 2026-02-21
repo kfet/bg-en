@@ -62,6 +62,10 @@ POS_MAP = {
     "Particle":                      "part",
     "Numeral":                       "num",
     "Number":                        "num",
+    "Interjection":                  "interj",
+    "Pronoun":                       "pron",
+    "Conjunction":                   "conj",
+    "Determiner":                    "det",
 }
 
 
