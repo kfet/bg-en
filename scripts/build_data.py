@@ -42,6 +42,7 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "data")
 DATASETS = ["bg-en", "en-bg"]
 
 POS_MAP = {
+    # Bulgarian POS labels (bg-en.sqlite3)
     "Съществително_нарицателно_име": "n",
     "Съществително_собствено_име":   "prop.n",
     "Глагол":                        "v",
@@ -50,6 +51,17 @@ POS_MAP = {
     "Предлог":                       "prep",
     "Частица":                       "part",
     "Числително_име":                "num",
+    # English POS labels (en-bg.sqlite3)
+    "Noun":                          "n",
+    "Proper_noun":                   "prop.n",
+    "Verb":                          "v",
+    "Adjective":                     "adj",
+    "Adverb":                        "adv",
+    "Preposition":                   "prep",
+    "Prepositional_phrase":          "prep",
+    "Particle":                      "part",
+    "Numeral":                       "num",
+    "Number":                        "num",
 }
 
 
