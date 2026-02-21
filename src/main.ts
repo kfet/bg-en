@@ -148,12 +148,18 @@ function renderEntries(entries: Entry[]): void {
 
   const html: string[] = []
   html.push(`<p class="result-count" aria-live="polite">${escHtml(countLabel)}</p>`)
+
+  const FOLD_THRESHOLD = 5
+
   for (const [word, group] of grouped) {
+    const needsFold = group.length > FOLD_THRESHOLD
     html.push(`<article class="result-card" role="listitem">`)
     html.push(`<h2 class="headword">${highlightPrefix(word, lastQuery)}</h2>`)
-    for (const [, trans, sense, pos] of group) {
+    group.forEach((entry, idx) => {
+      const [, trans, sense, pos] = entry
+      const hidden = needsFold && idx >= FOLD_THRESHOLD
       const translations = trans.split(' | ').map(t => t.trim()).filter(Boolean)
-      html.push(`<div class="translation-row">`)
+      html.push(`<div class="translation-row${hidden ? ' row-hidden' : ''}">`)
       html.push(
         `<div class="trans-main">${posTag(pos)}` +
         translations.map(t =>
@@ -166,6 +172,13 @@ function renderEntries(entries: Entry[]): void {
         html.push(`<div class="sense">${escHtml(sense)}</div>`)
       }
       html.push(`</div>`)
+    })
+    if (needsFold) {
+      const remaining = group.length - FOLD_THRESHOLD
+      html.push(
+        `<button class="show-more-btn" aria-expanded="false">` +
+        `Покажи още ${remaining} / Show ${remaining} more ▾</button>`
+      )
     }
     html.push(`</article>`)
   }
@@ -194,6 +207,23 @@ function renderEntries(entries: Entry[]): void {
         document.execCommand('copy')
         document.body.removeChild(ta)
         succeed()
+      }
+    })
+  })
+
+  // Attach show-more handlers
+  resultsEl.querySelectorAll<HTMLButtonElement>('.show-more-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.result-card')!
+      const hidden = card.querySelectorAll<HTMLElement>('.row-hidden')
+      const expanded = btn.getAttribute('aria-expanded') === 'true'
+      hidden.forEach(row => row.classList.toggle('row-hidden', expanded))
+      btn.setAttribute('aria-expanded', String(!expanded))
+      if (expanded) {
+        const remaining = card.querySelectorAll('.translation-row').length - FOLD_THRESHOLD
+        btn.textContent = `Покажи още ${remaining} / Show ${remaining} more ▾`
+      } else {
+        btn.textContent = 'Скрий / Show less ▴'
       }
     })
   })

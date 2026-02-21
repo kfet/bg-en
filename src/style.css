@@ -355,6 +355,27 @@ main {
   padding-top: 0;
 }
 
+.row-hidden {
+  display: none;
+}
+
+.show-more-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0;
+  text-align: left;
+  width: 100%;
+}
+
+.show-more-btn:hover {
+  text-decoration: underline;
+}
+
 /* POS tag (pill badge) */
 .pos-tag {
   display: inline-block;
