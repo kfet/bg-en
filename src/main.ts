@@ -317,9 +317,10 @@ function setProgress(pct: number): void {
 
 // ── Boot / data loading ──────────────────────────────────────────────────────
 
-function setStatus(msg: string): void {
+function setStatus(msg: string, error = false): void {
   statusBar.textContent = msg
   statusBar.classList.toggle('hidden', !msg)
+  statusBar.classList.toggle('status-error', error)
 }
 
 async function boot(): Promise<void> {
@@ -343,7 +344,7 @@ async function boot(): Promise<void> {
       }
     })
   } catch (err) {
-    setStatus('Грешка при зареждане. Проверете интернет връзката. / Load error — check connection.')
+    setStatus('Грешка при зареждане. Проверете интернет връзката. / Load error — check connection.', true)
     console.error(err)
   }
 }

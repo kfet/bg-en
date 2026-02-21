@@ -285,6 +285,11 @@ main {
   pointer-events: none;
 }
 
+.status-bar.status-error {
+  color: var(--color-error, #c62828);
+  font-weight: 500;
+}
+
 /* ── Results ─────────────────────────────────────────────────────────────── */
 
 .results {
