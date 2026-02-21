@@ -193,8 +193,8 @@ func writeSSETextResponse(w http.ResponseWriter, text string) {
 	// Chunk the text to simulate streaming.
 	chunks := chunkString(text, 10)
 
-	for i, chunk := range chunks {
-		data := sseChunk("chatcmpl-mock", i, chunk, nil, nil)
+	for _, chunk := range chunks {
+		data := sseChunk("chatcmpl-mock", chunk, nil, nil)
 		fmt.Fprintf(w, "data: %s\n\n", data)
 		if flusher != nil {
 			flusher.Flush()
@@ -203,7 +203,7 @@ func writeSSETextResponse(w http.ResponseWriter, text string) {
 
 	// Final chunk with finish_reason and usage.
 	stop := "stop"
-	data := sseChunkFinal("chatcmpl-mock", len(chunks), &stop)
+	data := sseChunkFinal("chatcmpl-mock", &stop)
 	fmt.Fprintf(w, "data: %s\n\n", data)
 	fmt.Fprintf(w, "data: [DONE]\n\n")
 	if flusher != nil {
@@ -228,7 +228,7 @@ func writeSSEToolCall(w http.ResponseWriter, callID, toolName string, args map[s
 			Arguments: "",
 		},
 	}
-	data := sseChunk("chatcmpl-mock", 0, "", nil, []toolCallDelta{tc})
+	data := sseChunk("chatcmpl-mock", "", nil, []toolCallDelta{tc})
 	fmt.Fprintf(w, "data: %s\n\n", data)
 	if flusher != nil {
 		flusher.Flush()
@@ -241,7 +241,7 @@ func writeSSEToolCall(w http.ResponseWriter, callID, toolName string, args map[s
 			Arguments: string(argsJSON),
 		},
 	}
-	data2 := sseChunk("chatcmpl-mock", 1, "", nil, []toolCallDelta{tc2})
+	data2 := sseChunk("chatcmpl-mock", "", nil, []toolCallDelta{tc2})
 	fmt.Fprintf(w, "data: %s\n\n", data2)
 	if flusher != nil {
 		flusher.Flush()
@@ -249,7 +249,7 @@ func writeSSEToolCall(w http.ResponseWriter, callID, toolName string, args map[s
 
 	// Final chunk with finish_reason=tool_calls.
 	reason := "tool_calls"
-	data3 := sseChunkFinal("chatcmpl-mock", 2, &reason)
+	data3 := sseChunkFinal("chatcmpl-mock", &reason)
 	fmt.Fprintf(w, "data: %s\n\n", data3)
 	fmt.Fprintf(w, "data: [DONE]\n\n")
 	if flusher != nil {
@@ -295,7 +295,7 @@ type sseUsage struct {
 	TotalTokens      int `json:"total_tokens"`
 }
 
-func sseChunk(id string, index int, content string, finishReason *string, toolCalls []toolCallDelta) string {
+func sseChunk(id string, content string, finishReason *string, toolCalls []toolCallDelta) string {
 	resp := sseResponse{
 		ID:     id,
 		Object: "chat.completion.chunk",
@@ -314,7 +314,7 @@ func sseChunk(id string, index int, content string, finishReason *string, toolCa
 	return string(b)
 }
 
-func sseChunkFinal(id string, index int, finishReason *string) string {
+func sseChunkFinal(id string, finishReason *string) string {
 	resp := sseResponse{
 		ID:     id,
 		Object: "chat.completion.chunk",

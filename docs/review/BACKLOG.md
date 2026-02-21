@@ -1,13 +1,12 @@
 # Review Backlog
 
-_Last reviewed: 2026-02-21 cycle 4. Files reviewed: `.fir/skills/e2e/mockserver/main.go`. Build: passing (`go vet` clean)._
+_Last reviewed: 2026-02-21 cycle 4. Files reviewed: `.fir/skills/e2e/mockserver/main.go`, `.fir/skills/e2e/mockserver/main_test.go`. Build: passing. Tests: 18/18 pass._
 
 ---
 
 ## Simplification
 
-- `.fir/skills/e2e/mockserver/main.go:298` — `sseChunk(id string, index int, ...)` declares an `index int` parameter that is never used in the function body (`sseChoice.Index` is hardcoded to `0`). Remove or use it.
-- `.fir/skills/e2e/mockserver/main.go:317` — `sseChunkFinal(id string, index int, ...)` has the same issue: the `index int` parameter is declared but never referenced. Both call-sites pass a literal integer that has no effect.
+_(No open items — unused `index int` params in `sseChunk`/`sseChunkFinal` were removed 2026-02-21.)_
 
 ## Security
 
@@ -15,10 +14,13 @@ _(No issues found in current code surface.)_
 
 ## Test Coverage
 
-_(No issues.)_
+_(No open items — `main_test.go` added 2026-02-21 with 18 table-driven tests covering `lastUserText`, `toolSet`, `chunkString`, `sseChunk`, `sseChunkFinal`. All pass.)_
 
 ## Correctness
 
-_(No issues.)_
+_(No open items — `lastUserText`/tool-guard ordering fixed 2026-02-21.)_
 
+## Project Hygiene
 
+- `go.mod` at project root (`module bg-en`, `go 1.25.0`) is **untracked** — not staged or committed. Other agents will not see it until it's committed. Consider `git add go.mod && git commit -m "chore: add go.mod"`.
+- `mockserver` binary (8 MB) exists at project root — was built without `-o ./bin/` flag. The `.gitignore` does not cover Go binary outputs. Add `bin/` and a stray-binary pattern to `.gitignore` to prevent accidental commits. The e2e skill builds to `./bin/mock-e2e-server`; a root-level `mockserver` file is just a leftover artifact.
