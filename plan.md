@@ -34,7 +34,7 @@ No code exists yet. Start from T01.
 ## Phase 0 — Repo & Tooling Bootstrap
 
 ### T01 · Init repo structure and Node project
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: nothing
 **Agent**: any
 
@@ -65,7 +65,7 @@ No code exists yet. Start from T01.
 ---
 
 ### T02 · Configure vite.config.ts with PWA plugin
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T01
 **Agent**: any
 
@@ -136,7 +136,7 @@ export default defineConfig({
 ---
 
 ### T03 · Generate app icons
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T01
 **Agent**: any
 
@@ -193,7 +193,7 @@ If neither is available, create minimal valid placeholder PNGs using Python's `s
 ## Phase 1 — Data Pipeline
 
 ### T04 · Write data build script
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T01 (directory structure)
 **Agent**: any
 
@@ -375,7 +375,7 @@ python3 scripts/build_data.py
 ---
 
 ### T05 · Update .gitignore
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T04
 **Agent**: any
 
@@ -416,7 +416,7 @@ Thumbs.db
 ## Phase 2 — Core App Logic
 
 ### T06 · Implement data loader and binary search (`src/search.ts`)
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T04 (data files must exist to test against)
 **Agent**: any
 
@@ -572,7 +572,7 @@ export function detectDirection(input: string): Direction {
 ---
 
 ### T07 · Build the UI (`index.html` + `src/main.ts` + `src/style.css`)
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T06
 **Agent**: any
 
@@ -861,7 +861,7 @@ Replace entire file with a clean, mobile-first stylesheet. See styling spec belo
 ## Phase 3 — PWA Validation
 
 ### T08 · Verify PWA installability
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T02, T03, T07
 **Agent**: any
 
@@ -905,7 +905,7 @@ Replace entire file with a clean, mobile-first stylesheet. See styling spec belo
 ---
 
 ### T09 · Offline smoke test
-**Status**: `[ ]`
+**Status**: `[~]`
 **Depends on**: T08
 **Agent**: any
 
@@ -957,7 +957,7 @@ const { chromium } = require('playwright')
 ## Phase 4 — Deployment
 
 ### T10 · Set up GitHub Pages deployment
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T08, T09
 **Agent**: any
 
@@ -1042,7 +1042,7 @@ jobs:
 ---
 
 ### T11 · Add `README.md`
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T10
 **Agent**: any
 
@@ -1220,13 +1220,13 @@ type Entry = [
 
 | Phase | Tasks | Done | Remaining |
 |-------|-------|------|-----------|
-| 0 · Bootstrap | T01 T02 T03 | 0 | 3 |
-| 1 · Data | T04 T05 | 0 | 2 |
-| 2 · App | T06 T07 | 0 | 2 |
-| 3 · PWA | T08 T09 | 0 | 2 |
-| 4 · Deploy | T10 T11 | 0 | 2 |
+| 0 · Bootstrap | T01 T02 T03 | 3 | 0 |
+| 1 · Data | T04 T05 | 2 | 0 |
+| 2 · App | T06 T07 | 2 | 0 |
+| 3 · PWA | T08 T09 | 1 | 1 (T09 needs browser) |
+| 4 · Deploy | T10 T11 | 2 | 0 |
 | 5 · Polish | T12–T15 | 0 | 4 |
-| **Total** | **15** | **0** | **15** |
+| **Total** | **15** | **10** | **5** |
 
 ---
 
@@ -1236,4 +1236,4 @@ type Entry = [
 
 | Task | Agent | Date | Notes |
 |------|-------|------|-------|
-| — | — | — | — |
+| T01–T11 | Claude Code | 2026-02-21 | Full project scaffolded: Vite+TS, PWA plugin, icon generation, data pipeline (46k bg-en + 65k en-bg entries), search/UI/CSS, GitHub Actions deploy workflow, README. `npm run build` green. |

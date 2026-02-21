@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="bg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Offline Bulgarian–English dictionary" />
+    <link rel="icon" href="./icons/icon-192.png" />
+    <title>БГ–АН Речник</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <div class="header-title">
+          <h1>БГ ↔ АН</h1>
+          <p class="subtitle">Речник / Dictionary</p>
+        </div>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="search-bar">
+        <div class="direction-toggle">
+          <button id="btn-bg-en" class="dir-btn active" aria-pressed="true">БГ → АН</button>
+          <button id="btn-en-bg" class="dir-btn" aria-pressed="false">АН → БГ</button>
+          <button id="btn-auto" class="dir-btn" aria-pressed="false" title="Auto-detect from input">авто</button>
+        </div>
+        <div class="input-wrapper">
+          <input
+            id="search-input"
+            type="search"
+            inputmode="text"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="none"
+            spellcheck="false"
+            placeholder="търси… / search…"
+            aria-label="Search word"
+          />
+          <span id="dir-indicator" class="dir-indicator" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div id="progress-track" class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+
+      <div id="status-bar" class="status-bar" role="status" aria-live="polite"></div>
+
+      <div id="results" class="results" role="list" aria-label="Search results"></div>
+    </main>
+
+    <div id="install-banner" class="install-banner hidden">
+      <span>Инсталирай приложението за offline достъп</span>
+      <button id="install-btn">Инсталирай</button>
+      <button id="install-dismiss" aria-label="Dismiss">✕</button>
+    </div>
+
+    <div id="update-banner" class="update-banner hidden">
+      <span>Налична е нова версия.</span>
+      <button id="update-btn">Обнови</button>
+    </div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

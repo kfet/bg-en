@@ -1,0 +1,511 @@
+/* ── CSS Custom Properties ────────────────────────────────────────────────── */
+
+:root {
+  --primary: #1565c0;
+  --primary-light: #1e88e5;
+  --primary-dark: #003c8f;
+  --bg: #ffffff;
+  --bg-surface: #f5f7fa;
+  --bg-card: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --text-on-primary: #ffffff;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 4px 12px rgba(21, 101, 192, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --transition: 0.18s ease;
+  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  --primary: #5b9bd5;
+  --primary-light: #90caf9;
+  --primary-dark: #1565c0;
+  --bg: #121212;
+  --bg-surface: #1a1a1a;
+  --bg-card: #1e1e1e;
+  --text: #e8eaed;
+  --text-muted: #9aa0a6;
+  --text-on-primary: #ffffff;
+  --border: #2d2d2d;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 4px 12px rgba(90, 155, 213, 0.2), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100dvh;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+
+header {
+  background: var(--primary);
+  color: var(--text-on-primary);
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.header-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.header-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+h1 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+/* ── Theme Toggle ────────────────────────────────────────────────────────── */
+
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-on-primary);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.35rem 0.5rem;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Main ────────────────────────────────────────────────────────────────── */
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* ── Search Bar ──────────────────────────────────────────────────────────── */
+
+.search-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Direction Toggle ────────────────────────────────────────────────────── */
+
+.direction-toggle {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.dir-btn {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.35rem 0.8rem;
+  min-height: 36px;
+  transition: background var(--transition), border-color var(--transition), color var(--transition), box-shadow var(--transition);
+  white-space: nowrap;
+}
+
+.dir-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.dir-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-primary);
+  box-shadow: 0 2px 6px rgba(21, 101, 192, 0.3);
+}
+
+[data-theme="dark"] .dir-btn.active {
+  box-shadow: 0 2px 6px rgba(90, 155, 213, 0.35);
+}
+
+/* ── Search Input ─────────────────────────────────────────────────────────── */
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#search-input {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1.05rem;
+  line-height: 1.4;
+  min-height: 52px;
+  padding: 0.7rem 3rem 0.7rem 1rem;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#search-input::placeholder {
+  color: var(--text-muted);
+}
+
+#search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.15);
+  outline: none;
+}
+
+[data-theme="dark"] #search-input:focus {
+  box-shadow: 0 0 0 3px rgba(90, 155, 213, 0.2);
+}
+
+/* hide browser's built-in clear button on search inputs */
+#search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+}
+
+.dir-indicator {
+  position: absolute;
+  right: 0.75rem;
+  font-size: 0.8rem;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.8;
+}
+
+/* ── Progress Bar ─────────────────────────────────────────────────────────── */
+
+.progress-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  transition: opacity 0.4s ease;
+}
+
+.progress-track.hidden {
+  opacity: 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 99px;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* ── Status Bar ──────────────────────────────────────────────────────────── */
+
+.status-bar {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 0.5rem 0.8rem;
+  margin-bottom: 0.75rem;
+  transition: opacity var(--transition);
+}
+
+.status-bar.hidden {
+  display: none;
+}
+
+/* ── Results ─────────────────────────────────────────────────────────────── */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.no-results {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+/* ── Result Card ─────────────────────────────────────────────────────────── */
+
+.result-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 0.85rem 1rem;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.result-card:hover {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-hover);
+}
+
+/* ── Headword ─────────────────────────────────────────────────────────────── */
+
+.headword {
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  margin-bottom: 0.4rem;
+}
+
+[data-theme="dark"] .headword {
+  color: var(--primary-light);
+}
+
+/* ── Translation Row ─────────────────────────────────────────────────────── */
+
+.translation-row {
+  padding: 0.2rem 0;
+}
+
+.translation-row + .translation-row {
+  border-top: 1px dashed var(--border);
+  margin-top: 0.3rem;
+  padding-top: 0.4rem;
+}
+
+.trans-main {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  font-size: 0.95rem;
+}
+
+/* ── POS Tag ─────────────────────────────────────────────────────────────── */
+
+.pos-tag {
+  background: var(--primary);
+  border-radius: 99px;
+  color: var(--text-on-primary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.15em 0.55em;
+  flex-shrink: 0;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}
+
+[data-theme="dark"] .pos-tag {
+  background: var(--primary-dark);
+}
+
+/* ── Translation Text ────────────────────────────────────────────────────── */
+
+.trans {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.sep {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ── Copy Button ─────────────────────────────────────────────────────────── */
+
+.copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  opacity: 0.35;
+  padding: 0.1rem 0.2rem;
+  border-radius: 4px;
+  transition: opacity var(--transition), background var(--transition);
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.copy-btn:hover {
+  opacity: 0.85;
+  background: var(--bg-surface);
+}
+
+.copy-btn.copied {
+  color: #22c55e;
+  opacity: 1;
+}
+
+/* ── Sense / Gloss ───────────────────────────────────────────────────────── */
+
+.sense {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-style: italic;
+  margin-top: 0.2rem;
+  line-height: 1.4;
+}
+
+/* ── Install Banner ──────────────────────────────────────────────────────── */
+
+.install-banner,
+.update-banner {
+  align-items: center;
+  background: var(--primary);
+  bottom: 0;
+  color: var(--text-on-primary);
+  display: flex;
+  gap: 0.75rem;
+  left: 0;
+  padding: 0.85rem 1rem;
+  position: fixed;
+  right: 0;
+  z-index: 200;
+  flex-wrap: wrap;
+}
+
+.install-banner span,
+.update-banner span {
+  flex: 1;
+  font-size: 0.9rem;
+  min-width: 140px;
+}
+
+.install-banner button,
+.update-banner button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  border-radius: var(--radius-sm);
+  color: var(--text-on-primary);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.4rem 0.9rem;
+  min-height: 38px;
+  transition: background var(--transition);
+  white-space: nowrap;
+}
+
+.install-banner button:hover,
+.update-banner button:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+#install-dismiss {
+  background: transparent !important;
+  border: none !important;
+  font-size: 1rem;
+  opacity: 0.75;
+  padding: 0.4rem !important;
+  min-width: 0;
+}
+
+#install-dismiss:hover {
+  opacity: 1;
+  background: transparent !important;
+}
+
+/* ── Hidden utility ──────────────────────────────────────────────────────── */
+
+.hidden {
+  display: none !important;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  header {
+    padding: 0.6rem 0.75rem;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+  }
+
+  .subtitle {
+    display: none;
+  }
+
+  main {
+    padding: 0.75rem;
+  }
+
+  .dir-btn {
+    font-size: 0.78rem;
+    padding: 0.3rem 0.6rem;
+    min-height: 34px;
+  }
+
+  #search-input {
+    font-size: 1rem;
+    min-height: 48px;
+  }
+
+  .headword {
+    font-size: 1.1rem;
+  }
+}
+
+@media (min-width: 720px) {
+  main {
+    padding: 1.25rem 1rem;
+  }
+
+  .search-bar {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+}

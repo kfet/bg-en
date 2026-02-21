@@ -1,0 +1,22 @@
+# Node
+node_modules/
+dist/
+
+# Vite
+*.local
+
+# Data pipeline cache (large SQLite files, ~18 MB)
+scripts/.cache/
+
+# Generated data files — regenerate with: python3 scripts/build_data.py
+# Comment these out if you want to commit the data to the repo instead
+public/data/bg-en.json
+public/data/en-bg.json
+
+# Go build outputs
+bin/
+mockserver
+
+# OS
+.DS_Store
+Thumbs.db
