@@ -116,7 +116,7 @@ def export_dataset(name: str) -> None:
         FROM translation_grouped
         WHERE written_rep IS NOT NULL AND written_rep != ''
         GROUP BY written_rep, trans_list
-        ORDER BY written_rep
+        ORDER BY written_rep, top_score DESC
     """).fetchall()
     con.close()
 
