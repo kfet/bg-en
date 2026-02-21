@@ -160,42 +160,7 @@ main {
 /* ── Search bar ──────────────────────────────────────────────────────────── */
 
 .search-bar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   margin-bottom: 0.5rem;
-}
-
-/* Direction toggle buttons */
-.direction-toggle {
-  display: flex;
-  gap: 0.375rem;
-}
-
-.dir-btn {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
-  border: 2px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-family: var(--font);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
-  min-height: 40px;
-}
-
-.dir-btn:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-.dir-btn.active {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: #fff;
 }
 
 /* Input wrapper (search + indicator) */
@@ -208,7 +173,7 @@ main {
 /* Search input */
 #search-input {
   width: 100%;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 5.5rem 0.75rem 1rem;
   border: 2px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
@@ -220,7 +185,6 @@ main {
   transition: border-color 0.15s, box-shadow 0.15s;
   -webkit-appearance: none;
   appearance: none;
-  padding-right: 3.5rem; /* room for dir-indicator */
 }
 
 #search-input::placeholder {
@@ -240,9 +204,13 @@ main {
 .dir-indicator {
   position: absolute;
   right: 0.75rem;
-  font-size: 1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
   pointer-events: none;
   white-space: nowrap;
+  opacity: 0.85;
 }
 
 /* ── Progress bar ────────────────────────────────────────────────────────── */
@@ -361,24 +329,7 @@ main {
 }
 
 .row-hidden {
-  display: none;
-}
-
-.show-more-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  font-family: var(--font);
-  font-size: 0.8rem;
-  margin-top: 0.35rem;
-  padding: 0.2rem 0;
-  text-align: left;
-  width: 100%;
-}
-
-.show-more-btn:hover {
-  text-decoration: underline;
+  display: none;  /* kept for graceful degradation; no longer generated */
 }
 
 /* POS tag (pill badge) */
@@ -430,11 +381,21 @@ main {
 
 /* Sense / gloss */
 .sense {
-  font-size: 0.825rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
-  margin-top: 0.15rem;
-  line-height: 1.4;
-  font-style: italic;
+  margin-top: 0.2rem;
+  line-height: 1.45;
+}
+
+/* Numbered sense list (when >1 sense for a meaning) */
+.sense-list {
+  margin-top: 0.2rem;
+  padding-left: 1.4rem;
+  list-style: decimal;
+}
+
+.sense-list .sense {
+  margin-top: 0.1rem;
 }
 
 /* Copy button */
@@ -525,26 +486,8 @@ main {
 /* ── Responsive tweaks ───────────────────────────────────────────────────── */
 
 @media (min-width: 480px) {
-  .search-bar {
-    flex-direction: row;
-    align-items: stretch;
-  }
-
-  .direction-toggle {
-    flex-shrink: 0;
-  }
-
-  .dir-btn {
-    flex: none;
-    padding: 0 0.75rem;
-  }
-
   .input-wrapper {
     flex: 1;
-  }
-
-  #search-input {
-    width: 100%;
   }
 }
 

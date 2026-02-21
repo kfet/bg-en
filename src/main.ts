@@ -7,9 +7,6 @@ const resultsEl      = document.getElementById('results')          as HTMLDivEle
 const statusBar      = document.getElementById('status-bar')       as HTMLDivElement
 const progressTrack  = document.getElementById('progress-track')   as HTMLDivElement
 const progressFill   = document.getElementById('progress-fill')    as HTMLDivElement
-const btnBgEn        = document.getElementById('btn-bg-en')        as HTMLButtonElement
-const btnEnBg        = document.getElementById('btn-en-bg')        as HTMLButtonElement
-const btnAuto        = document.getElementById('btn-auto')         as HTMLButtonElement
 const dirIndicator   = document.getElementById('dir-indicator')    as HTMLSpanElement
 const themeToggle    = document.getElementById('theme-toggle')     as HTMLButtonElement
 const installBanner  = document.getElementById('install-banner')   as HTMLDivElement
@@ -20,7 +17,6 @@ const updateBtn      = document.getElementById('update-btn')       as HTMLButton
 
 // ── State ────────────────────────────────────────────────────────────────────
 
-let direction: Direction | 'auto' = 'auto'
 let deferredInstallPrompt: Event & { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> } | null = null
 
 // ── POS labels ───────────────────────────────────────────────────────────────
@@ -64,39 +60,19 @@ themeToggle.addEventListener('click', () => {
 
 initTheme()
 
-// ── Direction toggle ─────────────────────────────────────────────────────────
-
-function setDirection(d: Direction | 'auto'): void {
-  direction = d
-  btnBgEn.classList.toggle('active', d === 'bg-en')
-  btnEnBg.classList.toggle('active', d === 'en-bg')
-  btnAuto.classList.toggle('active', d === 'auto')
-  btnBgEn.setAttribute('aria-pressed', String(d === 'bg-en'))
-  btnEnBg.setAttribute('aria-pressed', String(d === 'en-bg'))
-  btnAuto.setAttribute('aria-pressed', String(d === 'auto'))
-  updateDirIndicator()
-  if (searchInput.value.trim()) runSearch()
-}
+// ── Direction indicator (read-only, auto-detected) ───────────────────────────
 
 function updateDirIndicator(): void {
-  if (direction !== 'auto') {
-    dirIndicator.textContent = ''
-    return
-  }
   const q = searchInput.value
   if (!q) {
     dirIndicator.textContent = ''
     return
   }
   const detected = detectDirection(q)
-  dirIndicator.textContent = detected === 'bg-en' ? '🇧🇬→🇬🇧' : '🇬🇧→🇧🇬'
+  dirIndicator.textContent = detected === 'bg-en' ? 'БГ→АН' : 'АН→БГ'
 }
 
-btnBgEn.addEventListener('click', () => setDirection('bg-en'))
-btnEnBg.addEventListener('click', () => setDirection('en-bg'))
-btnAuto.addEventListener('click', () => setDirection('auto'))
-
-// ── Rendering ────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function posTag(pos: string): string {
   if (!pos) return ''
@@ -126,15 +102,17 @@ function highlightPrefix(word: string, prefix: string): string {
   return escHtml(word)
 }
 
+// ── Rendering ────────────────────────────────────────────────────────────────
+
 let lastQuery = ''
 
-function renderEntries(entries: Entry[]): void {
+function renderEntries(entries: Entry[], dir: Direction): void {
   if (!entries.length) {
     resultsEl.innerHTML = '<p class="no-results">Няма резултати / No results</p>'
     return
   }
 
-  // Group by written_rep
+  // Group consecutive entries by headword
   const grouped = new Map<string, Entry[]>()
   for (const e of entries) {
     const arr = grouped.get(e[0]) ?? []
@@ -144,42 +122,51 @@ function renderEntries(entries: Entry[]): void {
 
   const wordCount = grouped.size
   const limitHit = entries.length >= 40
-  const countLabel = limitHit ? `${wordCount}+ думи / words` : `${wordCount} ${wordCount === 1 ? 'дума / word' : 'думи / words'}`
+  const countLabel = limitHit
+    ? `${wordCount}+ думи / words`
+    : `${wordCount} ${wordCount === 1 ? 'дума / word' : 'думи / words'}`
+
+  const dirLabel = dir === 'bg-en' ? 'БГ → АН' : 'АН → БГ'
 
   const html: string[] = []
-  html.push(`<p class="result-count" aria-live="polite">${escHtml(countLabel)}</p>`)
-
-  const FOLD_THRESHOLD = 5
+  html.push(`<p class="result-count" aria-live="polite">${escHtml(countLabel)} · ${escHtml(dirLabel)}</p>`)
 
   for (const [word, group] of grouped) {
-    const needsFold = group.length > FOLD_THRESHOLD
     html.push(`<article class="result-card" role="listitem">`)
     html.push(`<h2 class="headword">${highlightPrefix(word, lastQuery)}</h2>`)
-    group.forEach((entry, idx) => {
-      const [, trans, sense, pos] = entry
-      const hidden = needsFold && idx >= FOLD_THRESHOLD
+
+    for (const [, trans, sense, pos] of group) {
       const translations = trans.split(' | ').map(t => t.trim()).filter(Boolean)
-      html.push(`<div class="translation-row${hidden ? ' row-hidden' : ''}">`)
+
+      html.push(`<div class="translation-row">`)
+
+      // POS + translation chips
+      html.push(`<div class="trans-main">${posTag(pos)}`)
       html.push(
-        `<div class="trans-main">${posTag(pos)}` +
         translations.map(t =>
           `<span class="trans">${escHtml(t)}</span>` +
-          `<button class="copy-btn" aria-label="Copy translation" data-copy="${escHtml(t)}" title="Copy">📋</button>`
-        ).join(`<span class="sep"> · </span>`) +
-        `</div>`
+          `<button class="copy-btn" aria-label="Copy ${escHtml(t)}" data-copy="${escHtml(t)}" title="Copy">📋</button>`
+        ).join(`<span class="sep"> · </span>`)
       )
-      if (sense) {
-        html.push(`<div class="sense">${escHtml(sense)}</div>`)
-      }
       html.push(`</div>`)
-    })
-    if (needsFold) {
-      const remaining = group.length - FOLD_THRESHOLD
-      html.push(
-        `<button class="show-more-btn" aria-expanded="false">` +
-        `Покажи още ${remaining} / Show ${remaining} more ▾</button>`
-      )
+
+      // Sense lines — split " | " into individual items
+      if (sense) {
+        const senses = sense.split(' | ').map(s => s.trim()).filter(Boolean)
+        if (senses.length === 1) {
+          html.push(`<p class="sense">${escHtml(senses[0])}</p>`)
+        } else {
+          html.push(`<ol class="sense-list">`)
+          for (const s of senses) {
+            html.push(`<li class="sense">${escHtml(s)}</li>`)
+          }
+          html.push(`</ol>`)
+        }
+      }
+
+      html.push(`</div>`) // .translation-row
     }
+
     html.push(`</article>`)
   }
 
@@ -210,50 +197,23 @@ function renderEntries(entries: Entry[]): void {
       }
     })
   })
-
-  // Attach show-more handlers
-  resultsEl.querySelectorAll<HTMLButtonElement>('.show-more-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const card = btn.closest('.result-card')!
-      const hidden = card.querySelectorAll<HTMLElement>('.row-hidden')
-      const expanded = btn.getAttribute('aria-expanded') === 'true'
-      hidden.forEach(row => row.classList.toggle('row-hidden', expanded))
-      btn.setAttribute('aria-expanded', String(!expanded))
-      if (expanded) {
-        const remaining = card.querySelectorAll('.translation-row').length - FOLD_THRESHOLD
-        btn.textContent = `Покажи още ${remaining} / Show ${remaining} more ▾`
-      } else {
-        btn.textContent = 'Скрий / Show less ▴'
-      }
-    })
-  })
 }
 
 // ── URL state sync ────────────────────────────────────────────────────────────
 
-function pushUrlState(query: string, dir: Direction | 'auto'): void {
+function pushUrlState(query: string): void {
   const url = new URL(window.location.href)
   if (query) {
     url.searchParams.set('q', query)
-    if (dir !== 'auto') {
-      url.searchParams.set('dir', dir)
-    } else {
-      url.searchParams.delete('dir')
-    }
   } else {
     url.searchParams.delete('q')
-    url.searchParams.delete('dir')
   }
+  url.searchParams.delete('dir') // no longer used
   history.replaceState(null, '', url.toString())
 }
 
-function readUrlState(): { query: string; dir: Direction | 'auto' } {
-  const params = new URL(window.location.href).searchParams
-  const q = params.get('q') ?? ''
-  const dirParam = params.get('dir')
-  const dir: Direction | 'auto' =
-    dirParam === 'bg-en' || dirParam === 'en-bg' ? dirParam : 'auto'
-  return { query: q, dir }
+function readUrlState(): string {
+  return new URL(window.location.href).searchParams.get('q') ?? ''
 }
 
 // ── Search ───────────────────────────────────────────────────────────────────
@@ -265,16 +225,16 @@ function runSearch(): void {
   if (!query) {
     resultsEl.innerHTML = ''
     updateDirIndicator()
-    pushUrlState('', direction)
+    pushUrlState('')
     return
   }
 
-  const dir: Direction = direction === 'auto' ? detectDirection(query) : direction
+  const dir: Direction = detectDirection(query)
   updateDirIndicator()
-  pushUrlState(query, direction)
+  pushUrlState(query)
   lastQuery = query
   const results = searchPrefix(dir, query, 40)
-  renderEntries(results)
+  renderEntries(results, dir)
 }
 
 searchInput.addEventListener('input', () => {
@@ -291,7 +251,7 @@ searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
     searchInput.value = ''
     resultsEl.innerHTML = ''
     dirIndicator.textContent = ''
-    pushUrlState('', 'auto')
+    pushUrlState('')
   }
 })
 
@@ -334,10 +294,9 @@ async function boot(): Promise<void> {
       } else {
         setStatus('')
         // Restore search state from URL, then focus
-        const { query, dir } = readUrlState()
-        if (query) {
-          setDirection(dir)
-          searchInput.value = query
+        const q = readUrlState()
+        if (q) {
+          searchInput.value = q
           runSearch()
         }
         searchInput.focus()
