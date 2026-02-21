@@ -107,6 +107,22 @@ function escHtml(s: string): string {
     .replace(/>/g, '&gt;')
 }
 
+/**
+ * Highlight the matched prefix in a headword. Case-preserving.
+ * e.g. highlightPrefix('БАБА', 'баб') → '<mark>БАБ</mark>А'
+ */
+function highlightPrefix(word: string, prefix: string): string {
+  if (!prefix) return escHtml(word)
+  const p = prefix.toLowerCase()
+  const w = word.toLowerCase()
+  if (w.startsWith(p)) {
+    return `<mark>${escHtml(word.slice(0, prefix.length))}</mark>${escHtml(word.slice(prefix.length))}`
+  }
+  return escHtml(word)
+}
+
+let lastQuery = ''
+
 function renderEntries(entries: Entry[]): void {
   if (!entries.length) {
     resultsEl.innerHTML = '<p class="no-results">Няма резултати / No results</p>'
@@ -124,7 +140,7 @@ function renderEntries(entries: Entry[]): void {
   const html: string[] = []
   for (const [word, group] of grouped) {
     html.push(`<article class="result-card" role="listitem">`)
-    html.push(`<h2 class="headword">${escHtml(word)}</h2>`)
+    html.push(`<h2 class="headword">${highlightPrefix(word, lastQuery)}</h2>`)
     for (const [, trans, sense, pos] of group) {
       const translations = trans.split(' | ').map(t => t.trim()).filter(Boolean)
       html.push(`<div class="translation-row">`)
@@ -150,14 +166,25 @@ function renderEntries(entries: Entry[]): void {
   resultsEl.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const text = btn.dataset['copy'] ?? ''
-      void navigator.clipboard.writeText(text).then(() => {
+      const succeed = () => {
         btn.textContent = '✓'
         btn.classList.add('copied')
-        setTimeout(() => {
-          btn.textContent = '📋'
-          btn.classList.remove('copied')
-        }, 1500)
-      })
+        setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied') }, 1500)
+      }
+      if (navigator.clipboard) {
+        void navigator.clipboard.writeText(text).then(succeed)
+      } else {
+        // Fallback for HTTP contexts or older browsers
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+        succeed()
+      }
     })
   })
 }
@@ -205,6 +232,7 @@ function runSearch(): void {
   const dir: Direction = direction === 'auto' ? detectDirection(query) : direction
   updateDirIndicator()
   pushUrlState(query, direction)
+  lastQuery = query
   const results = searchPrefix(dir, query, 40)
   renderEntries(results)
 }
