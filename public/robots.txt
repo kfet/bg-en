@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kfet.github.io/bg-en/sitemap.xml

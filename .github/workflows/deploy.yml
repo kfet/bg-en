@@ -32,6 +32,12 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Cache WikiDict SQLite files
+        uses: actions/cache@v4
+        with:
+          path: scripts/.cache
+          key: wikdict-sqlite-2025-11
+
       - name: Build data files
         run: python3 scripts/build_data.py
 
