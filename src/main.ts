@@ -1,4 +1,4 @@
-import { loadDictionary, searchPrefix, detectDirection, type Direction, type Entry } from './search'
+import { loadDictionary, searchPrefix, detectDirection, getMeta, type Direction, type Entry } from './search'
 
 // ── Elements ────────────────────────────────────────────────────────────────
 
@@ -36,6 +36,12 @@ const POS_LABEL: Record<string, string> = {
   det: 'опред.',
 }
 
+const GENDER_LABEL: Record<string, string> = {
+  m: 'м.р.',
+  f: 'ж.р.',
+  n: 'ср.р.',
+}
+
 // ── Theme ────────────────────────────────────────────────────────────────────
 
 function applyTheme(dark: boolean): void {
@@ -64,20 +70,15 @@ initTheme()
 
 function updateDirIndicator(): void {
   const q = searchInput.value
-  if (!q) {
-    dirIndicator.textContent = ''
-    return
-  }
-  const detected = detectDirection(q)
-  dirIndicator.textContent = detected === 'bg-en' ? 'БГ→АН' : 'АН→БГ'
+  if (!q) { dirIndicator.textContent = ''; return }
+  dirIndicator.textContent = detectDirection(q) === 'bg-en' ? 'БГ→АН' : 'АН→БГ'
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function posTag(pos: string): string {
   if (!pos) return ''
-  const label = POS_LABEL[pos] ?? pos
-  return `<span class="pos-tag">${label}</span>`
+  return `<span class="pos-tag">${POS_LABEL[pos] ?? pos}</span>`
 }
 
 function escHtml(s: string): string {
@@ -88,18 +89,22 @@ function escHtml(s: string): string {
     .replace(/"/g, '&quot;')
 }
 
-/**
- * Highlight the matched prefix in a headword. Case-preserving.
- * e.g. highlightPrefix('БАБА', 'баб') → '<mark>БАБ</mark>А'
- */
 function highlightPrefix(word: string, prefix: string): string {
   if (!prefix) return escHtml(word)
-  const p = prefix.toLowerCase()
-  const w = word.toLowerCase()
-  if (w.startsWith(p)) {
+  if (word.toLowerCase().startsWith(prefix.toLowerCase())) {
     return `<mark>${escHtml(word.slice(0, prefix.length))}</mark>${escHtml(word.slice(prefix.length))}`
   }
   return escHtml(word)
+}
+
+/**
+ * Extract a leading "(domain, label)" parenthetical from a sense string.
+ * Returns { domain, rest } — rest may be empty.
+ */
+function extractDomain(sense: string): { domain: string; rest: string } {
+  const m = sense.match(/^\(([^)]+)\)\s*(.*)$/s)
+  if (m) return { domain: m[1], rest: m[2].trim() }
+  return { domain: '', rest: sense }
 }
 
 // ── Rendering ────────────────────────────────────────────────────────────────
@@ -121,58 +126,113 @@ function renderEntries(entries: Entry[], dir: Direction): void {
   }
 
   const wordCount = grouped.size
-  const limitHit = entries.length >= 40
+  const limitHit  = entries.length >= 40
   const countLabel = limitHit
     ? `${wordCount}+ думи / words`
     : `${wordCount} ${wordCount === 1 ? 'дума / word' : 'думи / words'}`
-
   const dirLabel = dir === 'bg-en' ? 'БГ → АН' : 'АН → БГ'
 
   const html: string[] = []
-  html.push(`<p class="result-count" aria-live="polite">${escHtml(countLabel)} · ${escHtml(dirLabel)}</p>`)
+  html.push(`<p class="result-count">${escHtml(countLabel)} · ${escHtml(dirLabel)}</p>`)
 
   for (const [word, group] of grouped) {
-    html.push(`<article class="result-card" role="listitem">`)
-    html.push(`<h2 class="headword">${highlightPrefix(word, lastQuery)}</h2>`)
+    const meta    = getMeta(word)   // non-null for Bulgarian headwords w/ kaikki data
+    const wiktUrl = `https://en.wiktionary.org/wiki/${encodeURIComponent(word)}`
 
-    for (const [, trans, sense, pos] of group) {
+    html.push(`<article class="result-card" role="listitem">`)
+
+    // ── Headword line ───────────────────────────────────────────────────────
+    html.push(`<div class="headword-line">`)
+    html.push(`<h2 class="headword">${highlightPrefix(word, lastQuery)}`)
+
+    if (meta?.ipa) {
+      html.push(` <span class="ipa">${escHtml(meta.ipa)}</span>`)
+    }
+    html.push(`</h2>`)
+
+    // Gender badge
+    if (meta?.gender) {
+      html.push(`<span class="gender-badge">${GENDER_LABEL[meta.gender] ?? meta.gender}</span>`)
+    }
+
+    // Aspect badge + paired form
+    if (meta?.aspect) {
+      const aspLabel = meta.aspect === 'impf' ? 'несв.' : 'св.'
+      html.push(`<span class="aspect-badge">${aspLabel}</span>`)
+      if (meta.paired) {
+        const pairedLabel = meta.aspect === 'impf' ? 'св.:' : 'несв.:'
+        html.push(`<span class="inflect">${pairedLabel} <em>${escHtml(meta.paired)}</em></span>`)
+      }
+    }
+
+    // Plural
+    if (meta?.pl) {
+      html.push(`<span class="inflect">мн.: <em>${escHtml(meta.pl)}</em></span>`)
+    }
+
+    // Meaning count badge (when >1)
+    if (group.length > 1) {
+      html.push(`<span class="meaning-count">${group.length} знач.</span>`)
+    }
+
+    // Wiktionary link
+    html.push(`<a class="wikt-link" href="${escHtml(wiktUrl)}" target="_blank" rel="noopener noreferrer" title="Open in Wiktionary" aria-label="Wiktionary entry for ${escHtml(word)}">🔗</a>`)
+
+    html.push(`</div>`) // .headword-line
+
+    // ── Meanings ────────────────────────────────────────────────────────────
+    const numbered = group.length > 1
+
+    group.forEach((entry, idx) => {
+      const [, trans, sense, pos] = entry
       const translations = trans.split(' | ').map(t => t.trim()).filter(Boolean)
+      const { domain, rest: cleanSense } = extractDomain(sense)
 
       html.push(`<div class="translation-row">`)
 
-      // POS + translation chips
-      html.push(`<div class="trans-main">${posTag(pos)}`)
+      // Row header: number · POS · domain · translation-count
+      html.push(`<div class="row-header">`)
+      if (numbered) html.push(`<span class="meaning-num">${idx + 1}.</span>`)
+      if (pos)      html.push(posTag(pos))
+      if (domain)   html.push(`<span class="domain-badge">${escHtml(domain)}</span>`)
+      if (translations.length > 1) {
+        html.push(`<span class="trans-count">${translations.length}</span>`)
+      }
+      html.push(`</div>`) // .row-header
+
+      // Translations — each is a reverse-lookup button + copy button
+      html.push(`<div class="trans-main">`)
       html.push(
         translations.map(t =>
-          `<span class="trans">${escHtml(t)}</span>` +
-          `<button class="copy-btn" aria-label="Copy ${escHtml(t)}" data-copy="${escHtml(t)}" title="Copy">📋</button>`
+          `<span class="trans" data-word="${escHtml(t)}" role="button" tabindex="0" title="Search '${escHtml(t)}'">` +
+            escHtml(t) +
+          `</span>` +
+          `<button class="copy-btn" data-copy="${escHtml(t)}" aria-label="Copy ${escHtml(t)}" title="Copy">📋</button>`
         ).join(`<span class="sep"> · </span>`)
       )
-      html.push(`</div>`)
+      html.push(`</div>`) // .trans-main
 
-      // Sense lines — split " | " into individual items
-      if (sense) {
-        const senses = sense.split(' | ').map(s => s.trim()).filter(Boolean)
+      // Sense / definition
+      if (cleanSense) {
+        const senses = cleanSense.split(' | ').map(s => s.trim()).filter(Boolean)
         if (senses.length === 1) {
           html.push(`<p class="sense">${escHtml(senses[0])}</p>`)
         } else {
           html.push(`<ol class="sense-list">`)
-          for (const s of senses) {
-            html.push(`<li class="sense">${escHtml(s)}</li>`)
-          }
+          for (const s of senses) html.push(`<li class="sense">${escHtml(s)}</li>`)
           html.push(`</ol>`)
         }
       }
 
       html.push(`</div>`) // .translation-row
-    }
+    })
 
     html.push(`</article>`)
   }
 
   resultsEl.innerHTML = html.join('')
 
-  // Attach copy button handlers
+  // ── Copy buttons ──────────────────────────────────────────────────────────
   resultsEl.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const text = btn.dataset['copy'] ?? ''
@@ -184,31 +244,38 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       if (navigator.clipboard) {
         void navigator.clipboard.writeText(text).then(succeed)
       } else {
-        // Fallback for HTTP contexts or older browsers
         const ta = document.createElement('textarea')
-        ta.value = text
-        ta.style.position = 'fixed'
-        ta.style.opacity = '0'
-        document.body.appendChild(ta)
-        ta.select()
+        ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'
+        document.body.appendChild(ta); ta.select()
         document.execCommand('copy')
-        document.body.removeChild(ta)
-        succeed()
+        document.body.removeChild(ta); succeed()
       }
+    })
+  })
+
+  // ── Reverse lookup — click a translation chip to search it ───────────────
+  resultsEl.querySelectorAll<HTMLElement>('.trans[data-word]').forEach(el => {
+    const activate = () => {
+      const word = el.dataset['word'] ?? ''
+      if (!word) return
+      searchInput.value = word
+      runSearch()
+      searchInput.focus()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    el.addEventListener('click', activate)
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate() }
     })
   })
 }
 
-// ── URL state sync ────────────────────────────────────────────────────────────
+// ── URL state ────────────────────────────────────────────────────────────────
 
 function pushUrlState(query: string): void {
   const url = new URL(window.location.href)
-  if (query) {
-    url.searchParams.set('q', query)
-  } else {
-    url.searchParams.delete('q')
-  }
-  url.searchParams.delete('dir') // no longer used
+  query ? url.searchParams.set('q', query) : url.searchParams.delete('q')
+  url.searchParams.delete('dir')
   history.replaceState(null, '', url.toString())
 }
 
@@ -224,17 +291,15 @@ function runSearch(): void {
   const query = searchInput.value.trim()
   if (!query) {
     resultsEl.innerHTML = ''
-    updateDirIndicator()
+    dirIndicator.textContent = ''
     pushUrlState('')
     return
   }
-
-  const dir: Direction = detectDirection(query)
+  const dir = detectDirection(query)
   updateDirIndicator()
   pushUrlState(query)
   lastQuery = query
-  const results = searchPrefix(dir, query, 40)
-  renderEntries(results, dir)
+  renderEntries(searchPrefix(dir, query, 40), dir)
 }
 
 searchInput.addEventListener('input', () => {
@@ -243,24 +308,16 @@ searchInput.addEventListener('input', () => {
 })
 
 searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
-  if (e.key === 'Enter') {
-    if (searchTimer) clearTimeout(searchTimer)
-    runSearch()
-  }
+  if (e.key === 'Enter') { if (searchTimer) clearTimeout(searchTimer); runSearch() }
   if (e.key === 'Escape') {
-    searchInput.value = ''
-    resultsEl.innerHTML = ''
-    dirIndicator.textContent = ''
-    pushUrlState('')
+    searchInput.value = ''; resultsEl.innerHTML = ''
+    dirIndicator.textContent = ''; pushUrlState('')
   }
 })
 
-// Ctrl+L / Cmd+L focuses search input
 document.addEventListener('keydown', (e: KeyboardEvent) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
-    e.preventDefault()
-    searchInput.focus()
-    searchInput.select()
+    e.preventDefault(); searchInput.focus(); searchInput.select()
   }
 })
 
@@ -268,14 +325,10 @@ document.addEventListener('keydown', (e: KeyboardEvent) => {
 
 function setProgress(pct: number): void {
   progressFill.style.width = `${pct}%`
-  if (pct >= 100) {
-    setTimeout(() => {
-      progressTrack.classList.add('hidden')
-    }, 400)
-  }
+  if (pct >= 100) setTimeout(() => progressTrack.classList.add('hidden'), 400)
 }
 
-// ── Boot / data loading ──────────────────────────────────────────────────────
+// ── Boot ─────────────────────────────────────────────────────────────────────
 
 function setStatus(msg: string, error = false): void {
   statusBar.textContent = msg
@@ -293,12 +346,8 @@ async function boot(): Promise<void> {
         setStatus(`Зарежда… ${pct}%`)
       } else {
         setStatus('')
-        // Restore search state from URL, then focus
         const q = readUrlState()
-        if (q) {
-          searchInput.value = q
-          runSearch()
-        }
+        if (q) { searchInput.value = q; runSearch() }
         searchInput.focus()
       }
     })
@@ -310,7 +359,7 @@ async function boot(): Promise<void> {
 
 void boot()
 
-// ── PWA: Install prompt ──────────────────────────────────────────────────────
+// ── PWA: Install ─────────────────────────────────────────────────────────────
 
 window.addEventListener('beforeinstallprompt', (e: Event) => {
   e.preventDefault()
@@ -327,21 +376,10 @@ installBtn.addEventListener('click', () => {
   })
 })
 
-installDismiss.addEventListener('click', () => {
-  installBanner.classList.add('hidden')
-})
+installDismiss.addEventListener('click', () => installBanner.classList.add('hidden'))
+window.addEventListener('appinstalled', () => installBanner.classList.add('hidden'))
 
-window.addEventListener('appinstalled', () => {
-  installBanner.classList.add('hidden')
-})
+// ── PWA: Update ──────────────────────────────────────────────────────────────
 
-// ── PWA: Update notification ─────────────────────────────────────────────────
-
-document.addEventListener('sw-update-available', () => {
-  updateBanner.classList.remove('hidden')
-})
-
-updateBtn.addEventListener('click', () => {
-  updateBanner.classList.add('hidden')
-  window.location.reload()
-})
+document.addEventListener('sw-update-available', () => updateBanner.classList.remove('hidden'))
+updateBtn.addEventListener('click', () => { updateBanner.classList.add('hidden'); window.location.reload() })

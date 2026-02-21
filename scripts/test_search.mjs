@@ -110,6 +110,19 @@ assert(enBg.entries.length >= 40000,  `en-bg has ≥40k entries (got ${enBg.entr
 assert(bgEn.entries.every(e => Array.isArray(e) && e.length === 4), "all bg-en entries are [4]")
 assert(enBg.entries.every(e => Array.isArray(e) && e.length === 4), "all en-bg entries are [4]")
 
+// Meta (kaikki) checks — bg-en only
+const meta = bgEn.meta ?? {}
+assert(typeof meta === 'object', "bg-en has meta object")
+const metaCount = Object.keys(meta).length
+assert(metaCount > 5000, `meta has ${metaCount.toLocaleString()} entries (>5000)`)
+// Spot-check баба
+const баба_meta = meta['баба']
+assert(баба_meta?.ipa && баба_meta.ipa.includes('['), `баба meta has IPA: ${JSON.stringify(баба_meta?.ipa)}`)
+assert(баба_meta?.gender === 'f', `баба meta has gender=f (got ${баба_meta?.gender})`)
+assert(баба_meta?.pl === 'баби', `баба meta has pl=баби (got ${баба_meta?.pl})`)
+// en-bg has no meta
+assert(!enBg.meta, "en-bg has no meta (English kaikki not processed)")
+
 const validPos = new Set(['n', 'prop.n', 'v', 'adj', 'adv', 'prep', 'part', 'num', 'interj', 'pron', 'conj', 'det', ''])
 const badPos = bgEn.entries.map(e => e[3]).filter(p => !validPos.has(p))
 assert(badPos.length === 0, `all POS values are valid (unexpected: ${JSON.stringify(badPos.slice(0,5))})`)

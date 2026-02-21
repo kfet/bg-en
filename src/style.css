@@ -297,16 +297,86 @@ main {
   transform: translateY(-1px);
 }
 
+/* Headword line — headword + badges on one flex row */
+.headword-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
 /* Headword */
 .headword {
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--color-text);
-  margin-bottom: 0.5rem;
   line-height: 1.3;
 }
 
-/* Prefix match highlight — underline the matched part, no background */
+/* IPA pronunciation */
+.ipa {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Gender badge — м.р. ж.р. ср.р. */
+.gender-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-pos-text);
+  background: #5c6bc0;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  letter-spacing: 0.02em;
+}
+
+/* Aspect badge — несв. св. */
+.aspect-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-pos-text);
+  background: #00897b;
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  letter-spacing: 0.02em;
+}
+
+/* Inflection note — мн.: баби, св.: спра */
+.inflect {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.inflect em {
+  font-style: normal;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+/* Meaning count badge */
+.meaning-count {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+}
+
+/* Wiktionary link */
+.wikt-link {
+  font-size: 0.8rem;
+  text-decoration: none;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+  margin-left: auto;
+}
+
+.wikt-link:hover { opacity: 1; }
+
+/* Prefix match highlight */
 .headword mark {
   background: transparent;
   color: var(--color-primary);
@@ -319,13 +389,50 @@ main {
 
 /* Translation row */
 .translation-row {
-  padding: 0.25rem 0;
+  padding: 0.35rem 0;
   border-top: 1px solid var(--color-border);
 }
 
 .translation-row:first-of-type {
   border-top: none;
   padding-top: 0;
+}
+
+/* Row header: number · POS · domain · count */
+.row-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin-bottom: 0.2rem;
+}
+
+/* Meaning number */
+.meaning-num {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  min-width: 1.2em;
+}
+
+/* Domain / register label */
+.domain-badge {
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+}
+
+/* Translation count pill */
+.trans-count {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-border);
+  border-radius: 10px;
+  padding: 0.05em 0.45em;
 }
 
 .row-hidden {
@@ -357,10 +464,21 @@ main {
   gap: 0.1rem;
 }
 
-/* Individual translation */
+/* Individual translation — clickable for reverse lookup */
 .trans {
   color: var(--color-primary-dk);
   font-weight: 500;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 0.1em;
+  transition: background 0.12s, color 0.12s;
+}
+
+.trans:hover,
+.trans:focus-visible {
+  background: var(--color-primary);
+  color: #fff;
+  outline: none;
 }
 
 [data-theme="dark"] .trans {

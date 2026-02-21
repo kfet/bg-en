@@ -5,15 +5,26 @@ export type Direction = 'bg-en' | 'en-bg'
 // Each entry: [written_rep, trans_list, sense_list, pos]
 export type Entry = [string, string, string, string]
 
+// Per-headword metadata from kaikki (Bulgarian words only)
+export type WordMeta = {
+  ipa?:    string   // e.g. "[ˈbabɐ]"
+  gender?: string   // 'm' | 'f' | 'n'
+  pl?:     string   // plural form, e.g. "баби"
+  aspect?: string   // 'impf' | 'pf'
+  paired?: string   // paired aspect form, e.g. "спра"
+}
+
 export interface DictData {
   version: string
   entries: Entry[]
+  meta?:   Record<string, WordMeta>
 }
 
 // ── Singleton state ──────────────────────────────────────────────────────────
 
 let bgEnData: Entry[] | null = null
 let enBgData: Entry[] | null = null
+let bgEnMeta: Record<string, WordMeta> = {}
 let loadPromise: Promise<void> | null = null
 
 // ── Loading ──────────────────────────────────────────────────────────────────
@@ -22,6 +33,9 @@ async function fetchDataset(name: Direction): Promise<Entry[]> {
   const res = await fetch(`./data/${name}.json`)
   if (!res.ok) throw new Error(`Failed to fetch ${name}.json: ${res.status}`)
   const payload: DictData = await res.json()
+  if (name === 'bg-en' && payload.meta) {
+    bgEnMeta = payload.meta
+  }
   return payload.entries
 }
 
@@ -134,4 +148,12 @@ export function lookupExact(direction: Direction, word: string): Entry[] {
  */
 export function detectDirection(input: string): Direction {
   return /[\u0400-\u04FF]/.test(input) ? 'bg-en' : 'en-bg'
+}
+
+/**
+ * Look up per-headword metadata (IPA, gender, plural, aspect).
+ * Only available for Bulgarian headwords (bg-en direction).
+ */
+export function getMeta(word: string): WordMeta | null {
+  return bgEnMeta[word] ?? null
 }
