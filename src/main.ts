@@ -155,7 +155,7 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       html.push(`<span class="gender-badge">${GENDER_LABEL[meta.gender] ?? meta.gender}</span>`)
     }
 
-    // Aspect badge + paired form
+    // Aspect badge + paired form (BG verbs)
     if (meta?.aspect) {
       const aspLabel = meta.aspect === 'impf' ? 'несв.' : 'св.'
       html.push(`<span class="aspect-badge">${aspLabel}</span>`)
@@ -165,9 +165,24 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       }
     }
 
-    // Plural
+    // Plural (BG мн.ч. or EN irregular)
     if (meta?.pl) {
-      html.push(`<span class="inflect">мн.: <em>${escHtml(meta.pl)}</em></span>`)
+      const plLabel = dir === 'bg-en' ? 'мн.:' : 'pl:'
+      html.push(`<span class="inflect">${plLabel} <em>${escHtml(meta.pl)}</em></span>`)
+    }
+
+    // EN: past tense + past participle
+    if (meta?.past) {
+      html.push(`<span class="inflect">past: <em>${escHtml(meta.past)}</em></span>`)
+      if (meta.pp && meta.pp !== meta.past) {
+        html.push(`<span class="inflect">pp: <em>${escHtml(meta.pp)}</em></span>`)
+      }
+    }
+
+    // EN: comparative + superlative
+    if (meta?.cmp) {
+      html.push(`<span class="inflect">cmp: <em>${escHtml(meta.cmp)}</em></span>`)
+      if (meta.sup) html.push(`<span class="inflect">sup: <em>${escHtml(meta.sup)}</em></span>`)
     }
 
     // Meaning count badge (when >1)

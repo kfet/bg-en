@@ -127,6 +127,15 @@ const enMetaCount = Object.keys(enMeta).length
 assert(enMetaCount > 10000, `en-bg meta has ${enMetaCount.toLocaleString()} IPA entries (>10k)`)
 const house_meta = enMeta['house']
 assert(house_meta?.ipa?.startsWith('/'), `house meta has IPA: ${JSON.stringify(house_meta?.ipa)}`)
+// Irregular forms
+const go_meta = enMeta['go']
+assert(go_meta?.past === 'went', `go meta past=went (got ${go_meta?.past})`)
+assert(go_meta?.pp   === 'gone', `go meta pp=gone   (got ${go_meta?.pp})`)
+const child_meta = enMeta['child']
+assert(child_meta?.pl === 'children', `child meta pl=children (got ${child_meta?.pl})`)
+const good_meta = enMeta['good']
+assert(good_meta?.cmp === 'better', `good meta cmp=better (got ${good_meta?.cmp})`)
+assert(good_meta?.sup === 'best',   `good meta sup=best   (got ${good_meta?.sup})`)
 
 const validPos = new Set(['n', 'prop.n', 'v', 'adj', 'adv', 'prep', 'part', 'num', 'interj', 'pron', 'conj', 'det', ''])
 const badPos = bgEn.entries.map(e => e[3]).filter(p => !validPos.has(p))

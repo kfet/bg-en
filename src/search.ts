@@ -5,13 +5,19 @@ export type Direction = 'bg-en' | 'en-bg'
 // Each entry: [written_rep, trans_list, sense_list, pos]
 export type Entry = [string, string, string, string]
 
-// Per-headword metadata from kaikki (Bulgarian words only)
+// Per-headword metadata from kaikki (Bulgarian) and ipa-dict/unimorph (English)
 export type WordMeta = {
-  ipa?:    string   // e.g. "[ˈbabɐ]"
+  ipa?:    string   // IPA pronunciation
+  // Bulgarian-specific (from kaikki)
   gender?: string   // 'm' | 'f' | 'n'
-  pl?:     string   // plural form, e.g. "баби"
+  pl?:     string   // plural form (BG: "баби"; EN irregular: "children")
   aspect?: string   // 'impf' | 'pf'
-  paired?: string   // paired aspect form, e.g. "спра"
+  paired?: string   // paired aspect form
+  // English-specific (from Unimorph + patch)
+  past?:   string   // irregular past tense ("went", "was/were")
+  pp?:     string   // past participle ("gone", "been")
+  cmp?:    string   // comparative ("better")
+  sup?:    string   // superlative ("best")
 }
 
 export interface DictData {
