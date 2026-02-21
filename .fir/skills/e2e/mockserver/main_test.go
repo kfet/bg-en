@@ -2,7 +2,11 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -273,6 +277,210 @@ func TestSseChunkFinal(t *testing.T) {
 		}
 		if resp.Choices[0].FinishReason == nil || *resp.Choices[0].FinishReason != "tool_calls" {
 			t.Errorf("FinishReason = %v, want %q", resp.Choices[0].FinishReason, "tool_calls")
+		}
+	})
+}
+
+// --- handleCompletions ---
+
+// sseLines reads all SSE data lines from a response body and returns their values.
+func sseLines(body string) []string {
+	var lines []string
+	sc := bufio.NewScanner(strings.NewReader(body))
+	for sc.Scan() {
+		line := sc.Text()
+		if strings.HasPrefix(line, "data: ") {
+			lines = append(lines, strings.TrimPrefix(line, "data: "))
+		}
+	}
+	return lines
+}
+
+// collectSSEText decodes all SSE chunks and concatenates text content.
+func collectSSEText(t *testing.T, body string) string {
+	t.Helper()
+	var out strings.Builder
+	for _, raw := range sseLines(body) {
+		if raw == "[DONE]" {
+			break
+		}
+		var resp sseResponse
+		if err := json.Unmarshal([]byte(raw), &resp); err != nil {
+			t.Fatalf("invalid SSE chunk JSON %q: %v", raw, err)
+		}
+		if len(resp.Choices) > 0 && resp.Choices[0].Delta.Content != nil {
+			out.WriteString(*resp.Choices[0].Delta.Content)
+		}
+	}
+	return out.String()
+}
+
+// collectSSEToolCall decodes all SSE chunks and returns the first tool-call name + arguments.
+func collectSSEToolCall(t *testing.T, body string) (name, args string) {
+	t.Helper()
+	for _, raw := range sseLines(body) {
+		if raw == "[DONE]" {
+			break
+		}
+		var resp sseResponse
+		if err := json.Unmarshal([]byte(raw), &resp); err != nil {
+			t.Fatalf("invalid SSE chunk JSON %q: %v", raw, err)
+		}
+		if len(resp.Choices) == 0 {
+			continue
+		}
+		for _, tc := range resp.Choices[0].Delta.ToolCalls {
+			if tc.Function != nil {
+				if tc.Function.Name != "" {
+					name = tc.Function.Name
+				}
+				if tc.Function.Arguments != "" {
+					args = tc.Function.Arguments
+				}
+			}
+		}
+	}
+	return name, args
+}
+
+func makeBody(t *testing.T, messages []chatMessage, tools []chatTool) *strings.Reader {
+	t.Helper()
+	b, err := json.Marshal(chatRequest{Messages: messages, Tools: tools})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	return strings.NewReader(string(b))
+}
+
+func mustJSONMsg(v any) json.RawMessage {
+	b, _ := json.Marshal(v)
+	return b
+}
+
+func TestHandleCompletions(t *testing.T) {
+	readTool := chatTool{Type: "function", Function: toolFunc{Name: "read"}}
+	writeTool := chatTool{Type: "function", Function: toolFunc{Name: "write"}}
+	bashTool := chatTool{Type: "function", Function: toolFunc{Name: "bash"}}
+
+	t.Run("malformed JSON returns 400", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader("{bad json"))
+		w := httptest.NewRecorder()
+		handleCompletions(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("status = %d, want 400", w.Code)
+		}
+	})
+
+	t.Run("plain text default response", func(t *testing.T) {
+		body := makeBody(t, []chatMessage{
+			{Role: "user", Content: mustJSONMsg("hello")},
+		}, nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", body)
+		w := httptest.NewRecorder()
+		handleCompletions(w, req)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		text := collectSSEText(t, w.Body.String())
+		if !strings.Contains(text, "MOCK_RESPONSE") {
+			t.Errorf("response %q missing MOCK_RESPONSE", text)
+		}
+		if !strings.Contains(text, "hello") {
+			t.Errorf("response %q missing echoed text", text)
+		}
+	})
+
+	t.Run("tool-result round-trip returns MOCK_TOOL_DONE", func(t *testing.T) {
+		body := makeBody(t, []chatMessage{
+			{Role: "user", Content: mustJSONMsg("READ_FILE foo.txt")},
+			{Role: "tool", Content: mustJSONMsg("file contents here")},
+		}, []chatTool{readTool})
+		req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", body)
+		w := httptest.NewRecorder()
+		handleCompletions(w, req)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		text := collectSSEText(t, w.Body.String())
+		if !strings.Contains(text, "MOCK_TOOL_DONE") {
+			t.Errorf("response %q missing MOCK_TOOL_DONE", text)
+		}
+	})
+
+	t.Run("READ_FILE dispatches read tool call", func(t *testing.T) {
+		body := makeBody(t, []chatMessage{
+			{Role: "user", Content: mustJSONMsg("READ_FILE /etc/hosts")},
+		}, []chatTool{readTool})
+		req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", body)
+		w := httptest.NewRecorder()
+		handleCompletions(w, req)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		name, args := collectSSEToolCall(t, w.Body.String())
+		if name != "read" {
+			t.Errorf("tool name = %q, want %q", name, "read")
+		}
+		if !strings.Contains(args, "/etc/hosts") {
+			t.Errorf("tool args %q missing path /etc/hosts", args)
+		}
+	})
+
+	t.Run("WRITE_FILE dispatches write tool call", func(t *testing.T) {
+		body := makeBody(t, []chatMessage{
+			{Role: "user", Content: mustJSONMsg("WRITE_FILE out.txt hello there")},
+		}, []chatTool{writeTool})
+		req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", body)
+		w := httptest.NewRecorder()
+		handleCompletions(w, req)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		name, args := collectSSEToolCall(t, w.Body.String())
+		if name != "write" {
+			t.Errorf("tool name = %q, want %q", name, "write")
+		}
+		if !strings.Contains(args, "out.txt") {
+			t.Errorf("tool args %q missing path out.txt", args)
+		}
+		if !strings.Contains(args, "hello there") {
+			t.Errorf("tool args %q missing content", args)
+		}
+	})
+
+	t.Run("RUN_BASH dispatches bash tool call", func(t *testing.T) {
+		body := makeBody(t, []chatMessage{
+			{Role: "user", Content: mustJSONMsg("RUN_BASH echo ok")},
+		}, []chatTool{bashTool})
+		req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", body)
+		w := httptest.NewRecorder()
+		handleCompletions(w, req)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		name, args := collectSSEToolCall(t, w.Body.String())
+		if name != "bash" {
+			t.Errorf("tool name = %q, want %q", name, "bash")
+		}
+		if !strings.Contains(args, "echo ok") {
+			t.Errorf("tool args %q missing command", args)
+		}
+	})
+
+	t.Run("READ_FILE without read tool falls through to plain text", func(t *testing.T) {
+		// No tools registered — keyword should not dispatch a tool call.
+		body := makeBody(t, []chatMessage{
+			{Role: "user", Content: mustJSONMsg("READ_FILE foo.txt")},
+		}, nil)
+		req := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", body)
+		w := httptest.NewRecorder()
+		handleCompletions(w, req)
+		if w.Code != http.StatusOK {
+			t.Errorf("status = %d, want 200", w.Code)
+		}
+		text := collectSSEText(t, w.Body.String())
+		if !strings.Contains(text, "MOCK_RESPONSE") {
+			t.Errorf("response %q should be plain text when tool not available", text)
 		}
 	})
 }

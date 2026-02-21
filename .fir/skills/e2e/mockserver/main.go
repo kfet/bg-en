@@ -47,7 +47,10 @@ func main() {
 		}
 		portFile = tmpDir + "/mock-e2e-port"
 	}
-	os.WriteFile(portFile, []byte(fmt.Sprintf("%d", port)), 0o644)
+	if err := os.WriteFile(portFile, []byte(fmt.Sprintf("%d", port)), 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "write port file: %v\n", err)
+		os.Exit(1)
+	}
 	fmt.Printf("MOCK_PORT=%d\n", port)
 
 	if err := http.Serve(listener, mux); err != nil {
