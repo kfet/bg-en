@@ -37,10 +37,18 @@ export async function loadDictionary(
 
   loadPromise = (async () => {
     onProgress?.(0)
-    bgEnData = await fetchDataset('bg-en')
-    onProgress?.(40)
-    enBgData = await fetchDataset('en-bg')
-    onProgress?.(100)
+    // Load both datasets in parallel — roughly halves first-load time
+    let loaded = 0
+    const tick = () => {
+      loaded++
+      onProgress?.(loaded === 1 ? 55 : 100)
+    }
+    const [bg, en] = await Promise.all([
+      fetchDataset('bg-en').then(d => { tick(); return d }),
+      fetchDataset('en-bg').then(d => { tick(); return d }),
+    ])
+    bgEnData = bg
+    enBgData = en
   })()
 
   return loadPromise
