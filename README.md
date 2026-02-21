@@ -6,12 +6,17 @@ Installable offline PWA dictionary for Bulgarian ↔ English, powered by [WikiDi
 
 ## Features
 
-- 🔍 Instant prefix search (binary search, no server)
+- 🔍 Instant prefix search (binary search, no server) with match highlighting
 - 🔄 Bulgarian → English and English → Bulgarian
 - 🤖 Auto-detects direction from Cyrillic vs Latin input
 - 📶 Works fully offline after first visit
 - 📲 Installable as a PWA (Add to Home Screen)
-- ~3.4 MB one-time data download, cached locally
+- 🌙 Dark mode (system preference + manual toggle)
+- 📋 Copy translations to clipboard (HTTPS + HTTP fallback)
+- 🔗 Shareable search links (`?q=WORD&dir=bg-en`)
+- 🏷️ POS badges — 11% bg→en, 95% en→bg coverage
+- 📊 Result count badge; "Show more" toggle for polysemous words
+- ~3.4 MB one-time download (gzip), cached by service worker
 
 ## Data
 
