@@ -31,12 +31,15 @@ derived from [Wiktionary](https://en.wiktionary.org), licensed under
 npm install
 
 # 2. Build data files (downloads ~18 MB of WikiDict SQLite, outputs ~10 MB JSON)
-python3 scripts/build_data.py
+npm run data          # alias for: python3 scripts/build_data.py
 
-# 3. Start dev server
+# 3. Run search logic tests (no browser needed)
+npm test
+
+# 4. Start dev server
 npm run dev
 
-# 4. Build for production
+# 5. Build for production
 npm run build
 ```
 

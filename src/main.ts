@@ -162,6 +162,33 @@ function renderEntries(entries: Entry[]): void {
   })
 }
 
+// ── URL state sync ────────────────────────────────────────────────────────────
+
+function pushUrlState(query: string, dir: Direction | 'auto'): void {
+  const url = new URL(window.location.href)
+  if (query) {
+    url.searchParams.set('q', query)
+    if (dir !== 'auto') {
+      url.searchParams.set('dir', dir)
+    } else {
+      url.searchParams.delete('dir')
+    }
+  } else {
+    url.searchParams.delete('q')
+    url.searchParams.delete('dir')
+  }
+  history.replaceState(null, '', url.toString())
+}
+
+function readUrlState(): { query: string; dir: Direction | 'auto' } {
+  const params = new URL(window.location.href).searchParams
+  const q = params.get('q') ?? ''
+  const dirParam = params.get('dir')
+  const dir: Direction | 'auto' =
+    dirParam === 'bg-en' || dirParam === 'en-bg' ? dirParam : 'auto'
+  return { query: q, dir }
+}
+
 // ── Search ───────────────────────────────────────────────────────────────────
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -171,11 +198,13 @@ function runSearch(): void {
   if (!query) {
     resultsEl.innerHTML = ''
     updateDirIndicator()
+    pushUrlState('', direction)
     return
   }
 
   const dir: Direction = direction === 'auto' ? detectDirection(query) : direction
   updateDirIndicator()
+  pushUrlState(query, direction)
   const results = searchPrefix(dir, query, 40)
   renderEntries(results)
 }
@@ -194,6 +223,7 @@ searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
     searchInput.value = ''
     resultsEl.innerHTML = ''
     dirIndicator.textContent = ''
+    pushUrlState('', 'auto')
   }
 })
 
@@ -234,6 +264,13 @@ async function boot(): Promise<void> {
         setStatus(`Зарежда… ${pct}%`)
       } else {
         setStatus('')
+        // Restore search state from URL, then focus
+        const { query, dir } = readUrlState()
+        if (query) {
+          setDirection(dir)
+          searchInput.value = query
+          runSearch()
+        }
         searchInput.focus()
       }
     })
