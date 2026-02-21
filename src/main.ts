@@ -137,7 +137,12 @@ function renderEntries(entries: Entry[]): void {
     grouped.set(e[0], arr)
   }
 
+  const wordCount = grouped.size
+  const limitHit = entries.length >= 40
+  const countLabel = limitHit ? `${wordCount}+ думи / words` : `${wordCount} ${wordCount === 1 ? 'дума / word' : 'думи / words'}`
+
   const html: string[] = []
+  html.push(`<p class="result-count" aria-live="polite">${escHtml(countLabel)}</p>`)
   for (const [word, group] of grouped) {
     html.push(`<article class="result-card" role="listitem">`)
     html.push(`<h2 class="headword">${highlightPrefix(word, lastQuery)}</h2>`)
