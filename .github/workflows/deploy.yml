@@ -32,11 +32,11 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Cache WikiDict SQLite + kaikki data
+      - name: Cache WikiDict SQLite + kaikki + ipa-dict
         uses: actions/cache@v4
         with:
           path: scripts/.cache
-          key: wikdict-kaikki-2025-11
+          key: wikdict-kaikki-ipadict-2025-11
 
       - name: Build data files
         run: python3 scripts/build_data.py

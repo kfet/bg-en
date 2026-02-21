@@ -136,7 +136,7 @@ function renderEntries(entries: Entry[], dir: Direction): void {
   html.push(`<p class="result-count">${escHtml(countLabel)} · ${escHtml(dirLabel)}</p>`)
 
   for (const [word, group] of grouped) {
-    const meta    = getMeta(word)   // non-null for Bulgarian headwords w/ kaikki data
+    const meta    = getMeta(word, dir)
     const wiktUrl = `https://en.wiktionary.org/wiki/${encodeURIComponent(word)}`
 
     html.push(`<article class="result-card" role="listitem">`)

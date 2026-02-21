@@ -35,6 +35,8 @@ import os
 VERSION     = "2025-11"
 BASE_URL    = f"https://download.wikdict.com/dictionaries/sqlite/2_{VERSION}"
 KAIKKI_URL  = "https://kaikki.org/dictionary/Bulgarian/kaikki.org-dictionary-Bulgarian.jsonl"
+IPA_EN_US   = "https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_US.txt"
+IPA_EN_UK   = "https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_UK.txt"
 CACHE_DIR   = os.path.join(os.path.dirname(__file__), ".cache")
 OUT_DIR     = os.path.join(os.path.dirname(__file__), "..", "public", "data")
 DATASETS    = ["bg-en", "en-bg"]
@@ -92,12 +94,14 @@ def download_file(url: str, dest: str, label: str) -> str:
         return dest
     print(f"  [download] {label} ...", flush=True)
     tmp = dest + ".tmp"
+    last: list = [-1]
     def progress(count, block, total):
         if total > 0:
             pct = min(100, int(count * block * 100 / total))
-            print(f"\r    {pct}%", end="", flush=True)
+            if pct != last[0] and pct % 10 == 0:
+                print(f"    {pct}%", flush=True)
+                last[0] = pct
     urllib.request.urlretrieve(url, tmp, reporthook=progress)
-    print()
     os.rename(tmp, dest)
     return dest
 
@@ -175,9 +179,30 @@ def build_kaikki_index(jsonl_path: str) -> dict:
     return index
 
 
+# ── English IPA (ipa-dict, US+UK, ~5 MB total) ───────────────────────────────
+
+def build_en_ipa_index() -> dict:
+    """Download en_US + en_UK IPA TSV files and return {word: ipa_string}."""
+    index: dict = {}
+    for label, url, fname in [
+        ("en_US", IPA_EN_US, "ipa-en_US.txt"),
+        ("en_UK", IPA_EN_UK, "ipa-en_UK.txt"),
+    ]:
+        path = download_file(url, os.path.join(CACHE_DIR, fname), f"{fname} (~3 MB)")
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) == 2:
+                    word = parts[0].lower()
+                    if word not in index:          # US preferred, UK fills gaps
+                        index[word] = parts[1].split(", ")[0]
+    print(f"  [ipa-dict] {len(index):,} English words indexed")
+    return index
+
+
 # ── WikiDict export ───────────────────────────────────────────────────────────
 
-def export_dataset(name: str, kaikki_index: dict) -> None:
+def export_dataset(name: str, kaikki_index: dict, en_ipa: dict) -> None:
     os.makedirs(CACHE_DIR, exist_ok=True)
     db_path = download_file(
         f"{BASE_URL}/{name}.sqlite3",
@@ -217,14 +242,20 @@ def export_dataset(name: str, kaikki_index: dict) -> None:
 
     entries.sort(key=lambda e: e[0].casefold())
 
-    # Build meta dict from kaikki (bg-en only)
+    # Build meta dict from kaikki (bg-en) or ipa-dict (en-bg)
     meta: dict = {}
     if kaikki_index:
         for rep in {e[0] for e in entries}:
             key = strip_accent(rep).lower()
             if key in kaikki_index:
                 meta[rep] = kaikki_index[key]
-        print(f"  [kaikki] {len(meta):,} headwords enriched with meta")
+        print(f"  [kaikki]   {len(meta):,} headwords enriched with meta")
+    elif en_ipa:
+        for rep in {e[0] for e in entries}:
+            ipa = en_ipa.get(rep.lower())
+            if ipa:
+                meta[rep] = {"ipa": ipa}
+        print(f"  [ipa-dict] {len(meta):,} headwords enriched with IPA")
 
     os.makedirs(OUT_DIR, exist_ok=True)
     out_path = os.path.join(OUT_DIR, f"{name}.json")
@@ -243,7 +274,7 @@ def export_dataset(name: str, kaikki_index: dict) -> None:
 def main() -> None:
     print(f"Building dictionary data (WikiDict {VERSION})\n")
 
-    # Download + index kaikki Bulgarian (only needed for bg-en)
+    # Bulgarian: kaikki (IPA, gender, inflections)
     print("--- kaikki (Bulgarian IPA / gender / inflections) ---")
     kaikki_path = download_file(
         KAIKKI_URL,
@@ -253,9 +284,18 @@ def main() -> None:
     kaikki_index = build_kaikki_index(kaikki_path)
     print()
 
+    # English: ipa-dict (IPA only, ~5 MB total)
+    print("--- ipa-dict (English IPA, US + UK) ---")
+    en_ipa = build_en_ipa_index()
+    print()
+
     for name in DATASETS:
         print(f"--- {name} ---")
-        export_dataset(name, kaikki_index if name == "bg-en" else {})
+        export_dataset(
+            name,
+            kaikki_index if name == "bg-en" else {},
+            en_ipa      if name == "en-bg" else {},
+        )
         print()
 
     print("Done. Files written to public/data/")

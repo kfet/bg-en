@@ -25,6 +25,7 @@ export interface DictData {
 let bgEnData: Entry[] | null = null
 let enBgData: Entry[] | null = null
 let bgEnMeta: Record<string, WordMeta> = {}
+let enBgMeta: Record<string, WordMeta> = {}
 let loadPromise: Promise<void> | null = null
 
 // ── Loading ──────────────────────────────────────────────────────────────────
@@ -33,9 +34,8 @@ async function fetchDataset(name: Direction): Promise<Entry[]> {
   const res = await fetch(`./data/${name}.json`)
   if (!res.ok) throw new Error(`Failed to fetch ${name}.json: ${res.status}`)
   const payload: DictData = await res.json()
-  if (name === 'bg-en' && payload.meta) {
-    bgEnMeta = payload.meta
-  }
+  if (name === 'bg-en' && payload.meta) bgEnMeta = payload.meta
+  if (name === 'en-bg' && payload.meta) enBgMeta = payload.meta
   return payload.entries
 }
 
@@ -152,8 +152,10 @@ export function detectDirection(input: string): Direction {
 
 /**
  * Look up per-headword metadata (IPA, gender, plural, aspect).
- * Only available for Bulgarian headwords (bg-en direction).
+ * Bulgarian headwords: IPA + gender + plural + aspect (from kaikki).
+ * English headwords:   IPA only (from ipa-dict US+UK).
  */
-export function getMeta(word: string): WordMeta | null {
-  return bgEnMeta[word] ?? null
+export function getMeta(word: string, dir: Direction): WordMeta | null {
+  const store = dir === 'bg-en' ? bgEnMeta : enBgMeta
+  return store[word] ?? null
 }

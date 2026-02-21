@@ -120,8 +120,13 @@ const баба_meta = meta['баба']
 assert(баба_meta?.ipa && баба_meta.ipa.includes('['), `баба meta has IPA: ${JSON.stringify(баба_meta?.ipa)}`)
 assert(баба_meta?.gender === 'f', `баба meta has gender=f (got ${баба_meta?.gender})`)
 assert(баба_meta?.pl === 'баби', `баба meta has pl=баби (got ${баба_meta?.pl})`)
-// en-bg has no meta
-assert(!enBg.meta, "en-bg has no meta (English kaikki not processed)")
+// en-bg has IPA-only meta from ipa-dict
+const enMeta = enBg.meta ?? {}
+assert(typeof enMeta === 'object', "en-bg has meta object")
+const enMetaCount = Object.keys(enMeta).length
+assert(enMetaCount > 10000, `en-bg meta has ${enMetaCount.toLocaleString()} IPA entries (>10k)`)
+const house_meta = enMeta['house']
+assert(house_meta?.ipa?.startsWith('/'), `house meta has IPA: ${JSON.stringify(house_meta?.ipa)}`)
 
 const validPos = new Set(['n', 'prop.n', 'v', 'adj', 'adv', 'prep', 'part', 'num', 'interj', 'pron', 'conj', 'det', ''])
 const badPos = bgEn.entries.map(e => e[3]).filter(p => !validPos.has(p))
