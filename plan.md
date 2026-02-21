@@ -1114,7 +1114,7 @@ Replace `USER` with the actual GitHub username.
 ## Phase 5 — Polish (do after all above are done)
 
 ### T12 · Add keyboard shortcut and focus UX
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1133,7 +1133,7 @@ Enhance `src/main.ts`:
 ---
 
 ### T13 · Add "copy translation" button
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1147,7 +1147,7 @@ In `src/main.ts` `renderEntries()`, add a copy button to each `.translation-row`
 ---
 
 ### T14 · Handle first-load data progress with a real progress bar
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1162,7 +1162,7 @@ Replace the text status bar with a visible progress bar UI:
 ---
 
 ### T15 · Dark mode
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1225,8 +1225,8 @@ type Entry = [
 | 2 · App | T06 T07 | 2 | 0 |
 | 3 · PWA | T08 T09 | 1 | 1 (T09 needs browser) |
 | 4 · Deploy | T10 T11 | 2 | 0 |
-| 5 · Polish | T12–T15 | 0 | 4 |
-| **Total** | **15** | **10** | **5** |
+| 5 · Polish | T12–T15 | 4 | 0 |
+| **Total** | **15** | **14** | **1** (T09 needs browser) |
 
 ---
 
