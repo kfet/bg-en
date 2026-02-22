@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:portable": "tsc && BASE_URL=./ vite build",
     "preview": "vite preview",
     "start": "npm run build && vite preview --port 4173 --strictPort",
     "test": "node scripts/test_search.mjs",

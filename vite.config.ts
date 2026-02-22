@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/bg-en/',
+  base: process.env.BASE_URL ?? '/bg-en/',
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
