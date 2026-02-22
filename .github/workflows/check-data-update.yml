@@ -1,0 +1,86 @@
+name: Check for data updates
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'   # 06:00 UTC on the 1st of every month
+  workflow_dispatch:        # allow manual trigger at any time
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect latest WikiDict release
+        id: check
+        run: |
+          LATEST=$(curl -s https://download.wikdict.com/dictionaries/sqlite/ \
+            | grep -oE 'href="2_[0-9]{4}-[0-9]{2}/' \
+            | grep -oE '[0-9]{4}-[0-9]{2}' \
+            | sort | tail -1)
+
+          CURRENT=$(grep -oE 'VERSION\s*=\s*"[0-9]{4}-[0-9]{2}"' scripts/build_data.py \
+            | grep -oE '[0-9]{4}-[0-9]{2}')
+
+          echo "latest=$LATEST"
+          echo "current=$CURRENT"
+          echo "latest=$LATEST"   >> "$GITHUB_OUTPUT"
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+
+          if [ "$LATEST" != "$CURRENT" ] && [ -n "$LATEST" ]; then
+            echo "needs_update=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_update=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update VERSION and cache key
+        if: steps.check.outputs.needs_update == 'true'
+        env:
+          LATEST: ${{ steps.check.outputs.latest }}
+          CURRENT: ${{ steps.check.outputs.current }}
+        run: |
+          # Bump VERSION in build script
+          sed -i "s/VERSION     = \"$CURRENT\"/VERSION     = \"$LATEST\"/" \
+            scripts/build_data.py
+
+          # Bump matching cache key so CI downloads fresh data
+          sed -i "s/wikdict-kaikki-ipadict-unimorph-$CURRENT/wikdict-kaikki-ipadict-unimorph-$LATEST/" \
+            .github/workflows/deploy.yml
+
+          # Sanity-check that both substitutions landed
+          grep "VERSION" scripts/build_data.py | head -1
+          grep "wikdict-kaikki" .github/workflows/deploy.yml
+
+      - name: Open pull request
+        if: steps.check.outputs.needs_update == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: data/wikdict-${{ steps.check.outputs.latest }}
+          delete-branch: true
+          commit-message: "chore: update data to WikiDict ${{ steps.check.outputs.latest }}"
+          title: "chore: update data ${{ steps.check.outputs.current }} → ${{ steps.check.outputs.latest }}"
+          body: |
+            Automated monthly data check found a new WikiDict release.
+
+            | | Version |
+            |---|---|
+            | Previous | `${{ steps.check.outputs.current }}` |
+            | Latest   | `${{ steps.check.outputs.latest }}` |
+
+            **Changes in this PR:**
+            - `VERSION` in `scripts/build_data.py`
+            - Cache key in `.github/workflows/deploy.yml`
+
+            Merging triggers a full data rebuild — all source files
+            (WikiDict SQLite, kaikki.org Bulgarian dump, ipa-dict en_US,
+            UniMorph) are re-downloaded fresh because the cache key changes.
+
+            > **Note:** CI does not run automatically on PRs opened by
+            > `GITHUB_TOKEN`. To verify the build before merging, push an
+            > empty commit to the `data/wikdict-${{ steps.check.outputs.latest }}`
+            > branch, or trigger the deploy workflow manually on that branch.
