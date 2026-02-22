@@ -1175,6 +1175,181 @@ If not already done in T07's CSS (which specifies dark mode via `@media prefers-
 
 ---
 
+## Phase 6 — QoL Improvements
+
+> Proposed 2026-02-22 after user study of the live PWA on iOS.
+> All seven tasks touch only `src/main.ts`, `index.html`, and `src/style.css`; no data pipeline changes.
+
+### T16 · iOS "Add to Home Screen" hint on the empty state
+**Status**: `[ ]`
+**Depends on**: T07
+**Agent**: any
+
+**Problem**: iOS never fires `beforeinstallprompt`, so the existing install banner is **completely invisible to iOS users**. They have no idea the app can be installed.
+
+**What to do**:
+In `src/main.ts` add a `renderEmptyState()` function (called when query is empty). Inside it, when running on iOS Safari **not** in standalone mode and the user has not dismissed the hint:
+- Show a card with icon 📲 and bilingual text: "Добави в началния екран / Add to Home Screen: Натисни **Сподели** (□↑) → **Добави към началния екран**"
+- A dismiss button (✕) stores `localStorage.setItem('ios-hint-dismissed', '1')` and removes the card
+- Detection: `const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)` and `(navigator as any).standalone !== true`
+
+Add CSS for `.ios-hint` — card style, muted-blue border, icon on the left, dismiss button on the right.
+
+**Acceptance criteria**:
+- On iOS Safari (not PWA), empty state shows the hint card
+- Tapping ✕ dismisses permanently (survives page reload)
+- Card is NOT shown in standalone mode or on non-iOS devices
+- Card is NOT shown when user has typed something
+
+---
+
+### T17 · Recent searches (tappable chips)
+**Status**: `[ ]`
+**Depends on**: T07
+**Agent**: any
+
+**What to do**:
+1. Add helpers `getRecentSearches(): string[]` and `addRecentSearch(q: string): void` that read/write `localStorage` key `'recent-searches'` as a JSON array (max 8 items, deduped, most-recent first).
+2. In `runSearch()`, after a successful search (non-empty results), call `addRecentSearch(query)`.
+3. In `renderEmptyState()`, if `getRecentSearches()` is non-empty, render a row:
+   ```
+   🕐 Последни / Recent:   [баба]  [house]  [красив]  …
+   ```
+   Each chip is a `<button class="chip">` that on click sets `searchInput.value = q` and calls `runSearch()`.
+
+Add CSS for `.chip-row` (horizontal flex, wrapping), `.chip` (pill button, surface background, border, hover highlight).
+
+**Acceptance criteria**:
+- First visit: no recent section shown
+- After searching "баба", clearing, and revisiting empty state: chip "баба" is visible
+- Clicking the chip searches "баба"
+- Maximum 8 chips shown (oldest dropped)
+- Chips survive page reload
+
+---
+
+### T18 · Page title tracks the current query
+**Status**: `[ ]`
+**Depends on**: T07
+**Agent**: any
+
+**What to do**:
+In `runSearch()`:
+```typescript
+document.title = query ? `${query} – БГ-АН Речник` : 'БГ–АН Речник'
+```
+One line. Call it unconditionally at the start of `runSearch()`.
+
+**Acceptance criteria**:
+- Browser tab shows e.g. `баба – БГ-АН Речник` while searching
+- Tab reverts to `БГ–АН Речник` when input is cleared
+- Browser history entries carry the word (making bookmarks and back-button navigation meaningful)
+
+---
+
+### T19 · Scroll to top when a new search is typed
+**Status**: `[ ]`
+**Depends on**: T07
+**Agent**: any
+
+**What to do**:
+At the top of `runSearch()`, when query is non-empty:
+```typescript
+window.scrollTo({ top: 0, behavior: 'smooth' })
+```
+This ensures results are visible even if the user had scrolled deep into a previous result set.
+
+**Acceptance criteria**:
+- Scroll position resets to top on every non-empty search
+- Smooth animation (not an instant jump)
+
+---
+
+### T20 · Web Share API on result cards
+**Status**: `[ ]`
+**Depends on**: T07
+**Agent**: any
+
+**What to do**:
+In `renderEntries()`, add a share button inside `.headword-line` for each card:
+```typescript
+if (navigator.share) {
+  html.push(`<button class="share-btn" data-word="${escHtml(word)}" aria-label="Share ${escHtml(word)}" title="Сподели / Share">⬆</button>`)
+}
+```
+Wire up after `innerHTML` is set:
+```typescript
+resultsEl.querySelectorAll<HTMLButtonElement>('.share-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const word = btn.dataset['word'] ?? ''
+    const url = new URL(window.location.href)
+    url.searchParams.set('q', word)
+    void navigator.share({ title: `${word} – БГ-АН Речник`, url: url.toString() })
+  })
+})
+```
+Button is completely absent when `navigator.share` is falsy (desktop Chrome, Firefox without share support).
+
+Add CSS for `.share-btn` — small, borderless, emoji, aligned to the right of `.headword-line`.
+
+**Acceptance criteria**:
+- On iOS PWA/Safari: share button appears on each card; tapping opens native share sheet with the word's permalink
+- On Firefox desktop: button is absent (no broken UI)
+- Shared URL contains `?q=word` so recipient lands directly on that word
+
+---
+
+### T21 · Example searches on the empty state
+**Status**: `[ ]`
+**Depends on**: T07, T16, T17 (shares `renderEmptyState()`)
+**Agent**: any
+
+**What to do**:
+In `renderEmptyState()`, always render a row of example words:
+```
+Например / e.g.:   [баба]  [house]  [красив]  [ходя]  [бърз]
+```
+Use the same `.chip` style as T17 but add `.chip-example` for a slightly different colour (muted, to visually separate from recent searches).
+
+**Acceptance criteria**:
+- Shown on empty state even on first visit
+- Clicking an example chip searches that word
+- Example chips are visually distinct from recent-search chips
+
+---
+
+### T22 · Offline / online status indicator
+**Status**: `[ ]`
+**Depends on**: T07
+**Agent**: any
+
+**What to do**:
+1. Add to `index.html` (above `<main>` or inside `<header>`):
+   ```html
+   <div id="offline-banner" class="offline-banner hidden">
+     📴 Офлайн режим / Offline — речникът работи без интернет
+   </div>
+   ```
+2. In `src/main.ts`:
+   ```typescript
+   const offlineBanner = document.getElementById('offline-banner') as HTMLDivElement
+   function updateOnlineStatus(): void {
+     offlineBanner.classList.toggle('hidden', navigator.onLine)
+   }
+   window.addEventListener('online', updateOnlineStatus)
+   window.addEventListener('offline', updateOnlineStatus)
+   updateOnlineStatus() // set initial state
+   ```
+3. Add CSS for `.offline-banner` — full-width, amber/yellow background, centred text, small font, no close button needed (auto-hides when back online).
+
+**Acceptance criteria**:
+- Banner appears within 1 second of going offline (DevTools → Network → Offline)
+- Banner disappears when back online
+- Banner is not shown when online on page load
+- Text is reassuring, not alarming (the app *works* offline — this is a feature)
+
+---
+
 ## Decisions (Do Not Revisit)
 
 | Decision | Choice | Rationale |
@@ -1226,7 +1401,8 @@ type Entry = [
 | 3 · PWA | T08 T09 | 2 | 0 |
 | 4 · Deploy | T10 T11 | 2 | 0 |
 | 5 · Polish | T12–T15 | 4 | 0 |
-| **Total** | **15** | **15** | **0** |
+| 6 · QoL | T16–T22 | 0 | 7 |
+| **Total** | **22** | **15** | **7** |
 
 ---
 

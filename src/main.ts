@@ -19,6 +19,8 @@ const offlineBanner  = document.getElementById('offline-banner')   as HTMLDivEle
 // ── State ────────────────────────────────────────────────────────────────────
 
 let deferredInstallPrompt: Event & { prompt(): Promise<void>; userChoice: Promise<{ outcome: string }> } | null = null
+const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent)
+const isStandalone = 'standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true
 
 // ── POS labels ───────────────────────────────────────────────────────────────
 
@@ -134,9 +136,7 @@ const EXAMPLES_BG = ['баба', 'котка', 'любов', 'работа', 'в
 const EXAMPLES_EN = ['house', 'beautiful', 'quickly', 'love', 'water']
 
 function renderEmptyState(): void {
-  const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent)
-  const isStandalone = 'standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true
-  const showIOSHint  = isIOS && !isStandalone
+  const showIOSHint  = isIOS && !isStandalone && localStorage.getItem('ios-hint-dismissed') !== '1'
 
   const recent = getRecent()
   const html: string[] = []
@@ -170,9 +170,15 @@ function renderEmptyState(): void {
 
   // ── iOS "Add to Home Screen" hint (T16) ──────────────────────────────────
   if (showIOSHint) {
-    html.push('<div class="ios-hint">')
-    html.push('📲 Натиснете <strong>Сподели</strong> → <strong>Добави на началния екран</strong>, за да инсталирате offline приложение.')
-    html.push('</div>')
+    html.push(`
+      <div class="ios-hint" id="ios-hint" role="note">
+        <span class="ios-hint-icon">📲</span>
+        <div class="ios-hint-text">
+          <strong>Добави в началния екран / Add to Home Screen:</strong><br>
+          Натисни <strong>Сподели</strong> (□↑) → <strong>Добави към началния екран</strong>
+        </div>
+        <button class="ios-hint-dismiss" id="ios-hint-dismiss" aria-label="Dismiss">✕</button>
+      </div>`)
   }
 
   html.push('</div>')
@@ -187,6 +193,12 @@ function renderEmptyState(): void {
       runSearch()
       searchInput.focus()
     })
+  })
+
+  // Wire iOS hint dismiss (T16)
+  document.getElementById('ios-hint-dismiss')?.addEventListener('click', () => {
+    localStorage.setItem('ios-hint-dismissed', '1')
+    document.getElementById('ios-hint')?.remove()
   })
 }
 
@@ -500,15 +512,11 @@ void boot()
 // browser-lifecycle event handler (pageshow fires on both fresh launch and
 // app-resume from the home screen).  navigator.standalone is true only when
 // running as an installed PWA on iOS.
-{
-  const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent)
-  const isStandalone = 'standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true
-  if (isIOS && isStandalone) {
-    window.addEventListener('pageshow', () => {
-      // rAF lets the page finish painting before we steal focus
-      requestAnimationFrame(() => searchInput.focus())
-    })
-  }
+if (isIOS && isStandalone) {
+  window.addEventListener('pageshow', () => {
+    // rAF lets the page finish painting before we steal focus
+    requestAnimationFrame(() => searchInput.focus())
+  })
 }
 
 // ── PWA: Install ─────────────────────────────────────────────────────────────
