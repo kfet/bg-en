@@ -9,7 +9,9 @@ Usage:
 Downloads:
     bg-en.sqlite3 (~4.6 MB)   from WikiDict 2025-11
     en-bg.sqlite3 (~13.7 MB)  from WikiDict 2025-11
-    kaikki-Bulgarian.jsonl (~120 MB) from kaikki.org  [for bg-en only]
+    kaikki-Bulgarian.jsonl (~120 MB) from kaikki.org  [bg-en: IPA/gender/inflections]
+    ipa-en_US.txt (~3 MB)     from ipa-dict (en_US only; MIT)  [en-bg: IPA]
+    unimorph-eng.txt (~18 MB) from UniMorph/eng (CC BY-SA 3.0) [en-bg: irregular forms]
 
 Outputs:
     public/data/bg-en.json   (entries + meta: IPA/gender/plural/aspect)
@@ -35,8 +37,8 @@ import os
 VERSION     = "2025-11"
 BASE_URL    = f"https://download.wikdict.com/dictionaries/sqlite/2_{VERSION}"
 KAIKKI_URL  = "https://kaikki.org/dictionary/Bulgarian/kaikki.org-dictionary-Bulgarian.jsonl"
+# en_US only — en_UK (ipacards, GPL 3.0) is excluded for licence compatibility
 IPA_EN_US   = "https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_US.txt"
-IPA_EN_UK   = "https://raw.githubusercontent.com/open-dict-data/ipa-dict/master/data/en_UK.txt"
 UNIMORPH_EN = "https://raw.githubusercontent.com/unimorph/eng/master/eng"
 CACHE_DIR   = os.path.join(os.path.dirname(__file__), ".cache")
 OUT_DIR     = os.path.join(os.path.dirname(__file__), "..", "public", "data")
@@ -180,24 +182,24 @@ def build_kaikki_index(jsonl_path: str) -> dict:
     return index
 
 
-# ── English IPA (ipa-dict, US+UK, ~5 MB total) ───────────────────────────────
+# ── English IPA (ipa-dict en_US only, MIT, ~3 MB) ────────────────────────────
 
 def build_en_ipa_index() -> dict:
-    """Download en_US + en_UK IPA TSV files and return {word: ipa_string}."""
+    """Download en_US IPA TSV and return {word: ipa_string}.
+
+    Only en_US is used (cmudict-ipa, MIT).  en_UK (ipacards, GPL 3.0) is
+    intentionally excluded to avoid copyleft propagation.
+    """
     index: dict = {}
-    for label, url, fname in [
-        ("en_US", IPA_EN_US, "ipa-en_US.txt"),
-        ("en_UK", IPA_EN_UK, "ipa-en_UK.txt"),
-    ]:
-        path = download_file(url, os.path.join(CACHE_DIR, fname), f"{fname} (~3 MB)")
-        with open(path, encoding="utf-8") as f:
-            for line in f:
-                parts = line.rstrip("\n").split("\t")
-                if len(parts) == 2:
-                    word = parts[0].lower()
-                    if word not in index:          # US preferred, UK fills gaps
-                        index[word] = parts[1].split(", ")[0]
-    print(f"  [ipa-dict] {len(index):,} English words indexed")
+    path = download_file(IPA_EN_US, os.path.join(CACHE_DIR, "ipa-en_US.txt"), "ipa-en_US.txt (~3 MB)")
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) == 2:
+                word = parts[0].lower()
+                if word not in index:
+                    index[word] = parts[1].split(", ")[0]
+    print(f"  [ipa-dict] {len(index):,} English words indexed (en_US)")
     return index
 
 
@@ -499,8 +501,8 @@ def main() -> None:
     kaikki_index = build_kaikki_index(kaikki_path)
     print()
 
-    # English: ipa-dict (IPA, ~5 MB) + Unimorph (irregular forms, ~18 MB)
-    print("--- ipa-dict (English IPA, US + UK) ---")
+    # English: ipa-dict en_US only (MIT) + Unimorph (irregular forms, ~18 MB)
+    print("--- ipa-dict (English IPA, en_US only — MIT) ---")
     en_ipa = build_en_ipa_index()
     print()
     print("--- unimorph (English irregular plurals / verb forms / comparatives) ---")

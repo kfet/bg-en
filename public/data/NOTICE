@@ -1,0 +1,37 @@
+NOTICE — Dictionary data licences
+==================================
+
+The JSON files in this directory (bg-en.json, en-bg.json) are compiled from
+several third-party sources. All are licensed under Creative Commons
+Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0) unless noted otherwise.
+Derivative works must be distributed under the same licence.
+
+Full licence text: https://creativecommons.org/licenses/by-sa/3.0/
+
+──────────────────────────────────────────────────────────────────────────────
+
+1. WikiDict 2025-11  (translation entries, bg→en and en→bg)
+   URL:     https://www.wikdict.com
+   Licence: CC BY-SA 3.0
+   Source:  Derived from Wiktionary (https://en.wiktionary.org)
+
+2. kaikki.org — Bulgarian dictionary extract  (IPA, gender, inflections)
+   URL:     https://kaikki.org/dictionary/Bulgarian/
+   Licence: CC BY-SA 3.0 and GFDL  (same as Wiktionary)
+   Source:  Structured data extracted from the English Wiktionary dump using
+            wiktextract (https://github.com/tatuylonen/wiktextract).
+   Citation: Tatu Ylonen: "Wiktextract: Wiktionary as Machine-Readable
+            Structured Data", LREC 2022, pp. 1317-1325.
+
+3. ipa-dict — English (en_US) pronunciation data  (IPA for English headwords)
+   URL:     https://github.com/open-dict-data/ipa-dict
+   Licence: MIT (repo-level); en_US data based on cmudict-ipa (MIT)
+   Source:  Modified version of cmudict-ipa by Lingliang Zhang
+            (https://github.com/lingz/cmudict-ipa).
+   Note:    Only en_US data is used. en_UK data (ipacards, GPL 3.0) is
+            deliberately excluded.
+
+4. UniMorph / eng — English morphological data  (irregular plurals, verb forms)
+   URL:     https://github.com/unimorph/eng
+   Licence: CC BY-SA 3.0
+   Source:  Derived from Wikipedia / Wiktionary.

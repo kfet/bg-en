@@ -20,9 +20,16 @@ Installable offline PWA dictionary for Bulgarian ↔ English, powered by [WikiDi
 
 ## Data
 
-Dictionary data from [WikiDict](https://www.wikdict.com) release `2025-11`,
-derived from [Wiktionary](https://en.wiktionary.org), licensed under
-[Creative Commons Attribution-ShareAlike 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+| Source | Used for | Licence |
+|---|---|---|
+| [WikiDict](https://www.wikdict.com) 2025-11 | Translation entries (bg→en, en→bg) | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) |
+| [kaikki.org](https://kaikki.org/dictionary/Bulgarian/) (Wiktionary extract) | Bulgarian IPA, gender, inflections | CC BY-SA 3.0 + GFDL |
+| [ipa-dict](https://github.com/open-dict-data/ipa-dict) en_US (cmudict-ipa) | English IPA pronunciations | MIT |
+| [UniMorph eng](https://github.com/unimorph/eng) | English irregular plurals/verb forms | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) |
+
+All CC BY-SA 3.0 data is derived from [Wiktionary](https://en.wiktionary.org).
+The compiled data files (`public/data/*.json`) are distributed under CC BY-SA 3.0;
+see [`public/data/NOTICE`](public/data/NOTICE) for full attribution.
 
 - bg→en: ~46,000 entries
 - en→bg: ~65,000 entries
@@ -66,5 +73,5 @@ To enable GitHub Pages:
 
 ## License
 
-App code: MIT  
-Dictionary data: [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) (WikiDict / Wiktionary)
+App code: [MIT](LICENSE)  
+Dictionary data: [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) (WikiDict / Wiktionary / UniMorph) — see [`public/data/NOTICE`](public/data/NOTICE)
