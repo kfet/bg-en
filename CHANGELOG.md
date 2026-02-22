@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added (Phase 6 — T16–T22)
+- **T16** iOS "Add to Home Screen" hint on empty state — shown only on iOS Safari outside standalone mode
+- **T17** Recent searches — tappable chips (up to 8) on the empty state, persisted via `localStorage`
+- **T18** Page title tracks current query — `<title>` updates to `word — БГ–АН Речник` while searching
+- **T19** Scroll-to-top on every new search — `window.scrollTo({ top: 0 })` in `runSearch()`
+- **T20** Web Share API button on result cards — 🔗 button appears when `navigator.share` is available; shares `?q=word` URL
+- **T21** Example searches on empty state — tappable BG + EN example chips for instant demo
+- **T22** Offline/online status banner — shows a dark banner when `navigator.onLine` is false; auto-hides on reconnect
+
 ## [0.1.0] - 2026-02-21
 
 First draft release of the Bulgarian-English dictionary PWA.

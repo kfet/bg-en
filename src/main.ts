@@ -14,6 +14,7 @@ const installBtn     = document.getElementById('install-btn')      as HTMLButton
 const installDismiss = document.getElementById('install-dismiss')  as HTMLButtonElement
 const updateBanner   = document.getElementById('update-banner')    as HTMLDivElement
 const updateBtn      = document.getElementById('update-btn')       as HTMLButtonElement
+const offlineBanner  = document.getElementById('offline-banner')   as HTMLDivElement
 
 // ── State ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +108,88 @@ function extractDomain(sense: string): { domain: string; rest: string } {
   return { domain: '', rest: sense }
 }
 
+// ── Recent searches (T17) ────────────────────────────────────────────────────
+
+const RECENT_KEY = 'recent-searches'
+const RECENT_MAX = 8
+
+function getRecent(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]') as string[]
+  } catch {
+    return []
+  }
+}
+
+function addRecent(query: string): void {
+  if (!query) return
+  const recent = getRecent().filter(q => q !== query)
+  recent.unshift(query)
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recent.slice(0, RECENT_MAX)))
+}
+
+// ── Empty state (T16 + T17 + T21) ───────────────────────────────────────────
+
+const EXAMPLES_BG = ['баба', 'котка', 'любов', 'работа', 'вода']
+const EXAMPLES_EN = ['house', 'beautiful', 'quickly', 'love', 'water']
+
+function renderEmptyState(): void {
+  const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const isStandalone = 'standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true
+  const showIOSHint  = isIOS && !isStandalone
+
+  const recent = getRecent()
+  const html: string[] = []
+  html.push('<div class="empty-state">')
+
+  // ── Recent searches (T17) ─────────────────────────────────────────────────
+  if (recent.length > 0) {
+    html.push('<div class="empty-section">')
+    html.push('<p class="empty-label">Скорошни / Recent</p>')
+    html.push('<div class="chip-row">')
+    for (const q of recent) {
+      html.push(`<button class="chip chip-recent" data-search="${escHtml(q)}">${escHtml(q)}</button>`)
+    }
+    html.push('</div>')
+    html.push('</div>')
+  }
+
+  // ── Example searches (T21) ────────────────────────────────────────────────
+  html.push('<div class="empty-section">')
+  html.push('<p class="empty-label">Примери / Examples</p>')
+  html.push('<div class="chip-row">')
+  for (const w of EXAMPLES_BG) {
+    html.push(`<button class="chip chip-example" data-search="${escHtml(w)}">${escHtml(w)}</button>`)
+  }
+  html.push('<span class="chip-sep">·</span>')
+  for (const w of EXAMPLES_EN) {
+    html.push(`<button class="chip chip-example" data-search="${escHtml(w)}">${escHtml(w)}</button>`)
+  }
+  html.push('</div>')
+  html.push('</div>')
+
+  // ── iOS "Add to Home Screen" hint (T16) ──────────────────────────────────
+  if (showIOSHint) {
+    html.push('<div class="ios-hint">')
+    html.push('📲 Натиснете <strong>Сподели</strong> → <strong>Добави на началния екран</strong>, за да инсталирате offline приложение.')
+    html.push('</div>')
+  }
+
+  html.push('</div>')
+  resultsEl.innerHTML = html.join('')
+
+  // Wire chip clicks
+  resultsEl.querySelectorAll<HTMLButtonElement>('.chip[data-search]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = btn.dataset['search'] ?? ''
+      if (!q) return
+      searchInput.value = q
+      runSearch()
+      searchInput.focus()
+    })
+  })
+}
+
 // ── Rendering ────────────────────────────────────────────────────────────────
 
 let lastQuery = ''
@@ -132,12 +215,16 @@ function renderEntries(entries: Entry[], dir: Direction): void {
     : `${wordCount} ${wordCount === 1 ? 'дума / word' : 'думи / words'}`
   const dirLabel = dir === 'bg-en' ? 'БГ → АН' : 'АН → БГ'
 
+  // Feature-detect Web Share API (T20)
+  const canShare = typeof navigator.share === 'function'
+
   const html: string[] = []
   html.push(`<p class="result-count">${escHtml(countLabel)} · ${escHtml(dirLabel)}</p>`)
 
   for (const [word, group] of grouped) {
     const meta    = getMeta(word, dir)
     const wiktUrl = `https://en.wiktionary.org/wiki/${encodeURIComponent(word)}`
+    const shareUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(word)}`
 
     html.push(`<article class="result-card" role="listitem">`)
 
@@ -190,8 +277,13 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       html.push(`<span class="meaning-count">${group.length} знач.</span>`)
     }
 
-    // Wiktionary link
-    html.push(`<a class="wikt-link" href="${escHtml(wiktUrl)}" target="_blank" rel="noopener noreferrer" title="Open in Wiktionary" aria-label="Wiktionary entry for ${escHtml(word)}">🔗</a>`)
+    // Web Share button (T20) — only when API is available
+    if (canShare) {
+      html.push(`<button class="share-btn" data-share-word="${escHtml(word)}" data-share-url="${escHtml(shareUrl)}" aria-label="Share ${escHtml(word)}" title="Сподели / Share">🔗</button>`)
+    }
+
+    // Wiktionary link (when no share button, always; when share button, still show but smaller)
+    html.push(`<a class="wikt-link" href="${escHtml(wiktUrl)}" target="_blank" rel="noopener noreferrer" title="Open in Wiktionary" aria-label="Wiktionary entry for ${escHtml(word)}">📖</a>`)
 
     html.push(`</div>`) // .headword-line
 
@@ -268,6 +360,15 @@ function renderEntries(entries: Entry[], dir: Direction): void {
     })
   })
 
+  // ── Web Share buttons (T20) ───────────────────────────────────────────────
+  resultsEl.querySelectorAll<HTMLButtonElement>('.share-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const word = btn.dataset['shareWord'] ?? ''
+      const url  = btn.dataset['shareUrl']  ?? ''
+      void navigator.share({ title: `${word} — БГ–АН Речник`, url }).catch(() => {/* user cancelled */})
+    })
+  })
+
   // ── Reverse lookup — click a translation chip to search it ───────────────
   resultsEl.querySelectorAll<HTMLElement>('.trans[data-word]').forEach(el => {
     const activate = () => {
@@ -304,16 +405,28 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 function runSearch(): void {
   const query = searchInput.value.trim()
+
+  // T18: page title tracks query
+  document.title = query ? `${query} — БГ–АН Речник` : 'БГ–АН Речник'
+
   if (!query) {
-    resultsEl.innerHTML = ''
     dirIndicator.textContent = ''
     pushUrlState('')
+    renderEmptyState()
     return
   }
+
+  // T19: scroll to top on new search
+  window.scrollTo({ top: 0 })
+
   const dir = detectDirection(query)
   updateDirIndicator()
   pushUrlState(query)
   lastQuery = query
+
+  // T17: remember this search
+  addRecent(query)
+
   renderEntries(searchPrefix(dir, query, 40), dir)
 }
 
@@ -325,8 +438,11 @@ searchInput.addEventListener('input', () => {
 searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
   if (e.key === 'Enter') { if (searchTimer) clearTimeout(searchTimer); runSearch() }
   if (e.key === 'Escape') {
-    searchInput.value = ''; resultsEl.innerHTML = ''
-    dirIndicator.textContent = ''; pushUrlState('')
+    searchInput.value = ''
+    dirIndicator.textContent = ''
+    pushUrlState('')
+    document.title = 'БГ–АН Речник'
+    renderEmptyState()
   }
 })
 
@@ -362,7 +478,12 @@ async function boot(): Promise<void> {
       } else {
         setStatus('')
         const q = readUrlState()
-        if (q) { searchInput.value = q; runSearch() }
+        if (q) {
+          searchInput.value = q
+          runSearch()
+        } else {
+          renderEmptyState()
+        }
         searchInput.focus()
       }
     })
@@ -414,3 +535,18 @@ window.addEventListener('appinstalled', () => installBanner.classList.add('hidde
 
 document.addEventListener('sw-update-available', () => updateBanner.classList.remove('hidden'))
 updateBtn.addEventListener('click', () => { updateBanner.classList.add('hidden'); window.location.reload() })
+
+// ── Offline / Online status banner (T22) ─────────────────────────────────────
+
+function updateOfflineBanner(): void {
+  if (navigator.onLine) {
+    offlineBanner.classList.add('hidden')
+  } else {
+    offlineBanner.classList.remove('hidden')
+  }
+}
+
+window.addEventListener('online',  updateOfflineBanner)
+window.addEventListener('offline', updateOfflineBanner)
+// Set initial state (in case page loads while offline)
+updateOfflineBanner()

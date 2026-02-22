@@ -569,6 +569,125 @@ main {
   color: var(--color-primary);
 }
 
+/* ── Empty state (T16 + T17 + T21) ──────────────────────────────────────── */
+
+.empty-state {
+  padding: 1.5rem 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.empty-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.empty-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.chip {
+  display: inline-block;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 0.3em 0.75em;
+  font-family: var(--font);
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  outline: none;
+}
+
+.chip-recent {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.chip-recent:hover,
+.chip-recent:focus-visible {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.chip-sep {
+  color: var(--color-sep);
+  font-size: 0.85rem;
+  padding: 0 0.1rem;
+}
+
+/* iOS "Add to Home Screen" hint (T16) */
+.ios-hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.9rem;
+  line-height: 1.5;
+}
+
+.ios-hint strong {
+  color: var(--color-text);
+}
+
+/* ── Share button (T20) ──────────────────────────────────────────────────── */
+
+.share-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.1em 0.3em;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  vertical-align: middle;
+  line-height: 1;
+  margin-left: auto;
+}
+
+.share-btn:hover {
+  opacity: 1;
+}
+
+/* When share-btn is present, wikt-link should not push to auto margin */
+.share-btn + .wikt-link {
+  margin-left: 0;
+}
+
+/* ── Offline banner (T22) ────────────────────────────────────────────────── */
+
+.offline-banner {
+  background: #37474f;
+  color: #fff;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
 /* ── Banners (install / update) ──────────────────────────────────────────── */
 
 .install-banner,
@@ -656,4 +775,162 @@ main {
   .headword {
     font-size: 1.3rem;
   }
+}
+
+/* ── Offline banner (T22) ────────────────────────────────────────────────── */
+
+.offline-banner {
+  width: 100%;
+  background: #f57f17;
+  color: #fff;
+  text-align: center;
+  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  z-index: 9;
+}
+
+/* ── Empty state (T16 · T17 · T21) ──────────────────────────────────────── */
+
+/* iOS "Add to Home Screen" hint card */
+.ios-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid #90caf9;
+  border-radius: var(--radius);
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+[data-theme="dark"] .ios-hint {
+  border-color: #1565c0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ios-hint {
+    border-color: #1565c0;
+  }
+}
+
+.ios-hint-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+  padding-top: 0.1rem;
+}
+
+.ios-hint-text {
+  flex: 1;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.ios-hint-text strong {
+  color: var(--color-primary);
+}
+
+.ios-hint-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  padding: 0 0.2rem;
+  flex-shrink: 0;
+  line-height: 1;
+  align-self: flex-start;
+  transition: color 0.15s;
+}
+
+.ios-hint-dismiss:hover {
+  color: var(--color-text);
+}
+
+/* Empty-state section wrapper */
+.empty-section {
+  margin-bottom: 1rem;
+}
+
+.empty-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.45rem;
+}
+
+/* Chip row */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+/* Base chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  line-height: 1.4;
+}
+
+.chip:hover,
+.chip:focus-visible {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  outline: none;
+}
+
+/* Recent-search chips — slightly warmer tint */
+.chip-recent {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+[data-theme="dark"] .chip-recent {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Example chips — muted, clearly secondary */
+.chip-example {
+  opacity: 0.7;
+}
+
+.chip-example:hover,
+.chip-example:focus-visible {
+  opacity: 1;
+}
+
+/* ── Share button (T20) ───────────────────────────────────────────────────── */
+
+.share-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.1em 0.3em;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.share-btn:hover {
+  opacity: 1;
 }
