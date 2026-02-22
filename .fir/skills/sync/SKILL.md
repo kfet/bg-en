@@ -1,163 +1,134 @@
 ---
 name: sync
-description: Sync the Go port with upstream TypeScript changes from pi-mono. Detects changed files, applies equivalent Go changes, regenerates models if needed, and updates the baseline.
+description: Update the dictionary data when a new WikiDict release is available. Detects the latest release, rebuilds public/data/*.json, runs tests, and updates CHANGELOG.md.
 ---
 
-# Upstream Sync
+# Data Update Skill
 
-Sync the Go port with the latest upstream TypeScript changes from `../pi-mono`.
+Update the BG↔EN dictionary data to the latest WikiDict release.
 
 ## Quick reference
 
-- Upstream repo: `../pi-mono` (relative to fi root)
-- Baseline: `sync/.baseline-hashes`
-- File map: `sync/UPSTREAM_MAP.md`
-- Log: `sync/SYNC_LOG.md`
+- Data source: https://download.wikdict.com/dictionaries/sqlite/
+- Build script: `scripts/build_data.py`
+- Output: `public/data/bg-en.json`, `public/data/en-bg.json`
+- Current version string: check `VERSION` constant in `scripts/build_data.py`
+- Cache dir: `scripts/.cache/` (SQLite files, not committed)
 
 ---
 
-## Step 1 — Detect changes
+## Step 1 — Check for a new release
+
+WikiDict releases are named `2_YYYY-MM`. Check the latest:
 
 ```bash
-bash sync/sync-check.sh ../pi-mono
+curl -s https://download.wikdict.com/dictionaries/sqlite/ | grep -oP '2_\d{4}-\d{2}' | sort -u | tail -5
 ```
 
-If output is `No upstream changes detected.` — you are done.
-
-Otherwise you get lines like:
-
-```
-CHANGED: packages/ai/src/models.generated.ts
-CHANGED: packages/coding-agent/src/core/auth-storage.ts
-```
-
----
-
-## Step 2 — For each changed file, look up the Go counterpart
-
-Open `sync/UPSTREAM_MAP.md`. Find the TS path in the table. It tells you whether the file is a **normal port** or a **generator**.
-
-### Normal port
-
-1. Read the diff since the last baseline commit:
-   ```bash
-   # Find the hash recorded for this file in the baseline
-   grep "packages/coding-agent/src/core/auth-storage.ts" sync/.baseline-hashes
-   # Diff from that hash to HEAD
-   cd ../pi-mono && git diff <old-hash>..HEAD -- packages/coding-agent/src/core/auth-storage.ts
-   ```
-   Or just diff from the HEAD of the Go file's recorded upstream hash:
-   ```bash
-   grep "Upstream hash" pkg/core/authstorage.go   # get the recorded hash
-   cd ../pi-mono && git diff <recorded-hash>..HEAD -- packages/coding-agent/src/core/auth-storage.ts
-   ```
-
-2. Read the current Go file.
-
-3. Apply equivalent changes. Keep Go idiomatic — no 1:1 TS syntax. Go uses:
-   - `NewFoo(...)` factory functions instead of `static Foo.create(...)`
-   - `sync.Mutex` instead of file locks (unless real cross-process locking is needed)
-   - Synchronous writes with goroutines if async is needed (rarely)
-
-4. Update the `// Upstream hash:` comment at the top of the Go file to the current HEAD:
-   ```bash
-   cd ../pi-mono && git rev-parse --short HEAD
-   ```
-
-5. Run tests:
-   ```bash
-   go vet ./... && go test ./...
-   ```
-
-### Generator file (`ai/src/models.generated.ts` → `pkg/ai/models_generated.go`)
-
-The generated file's content comes from fetching live APIs plus hardcoded overrides in `cmd/generate-models/main.go`. Follow this order:
-
-1. Check if the **generator script** itself changed:
-   ```bash
-   grep "Upstream hash" cmd/generate-models/main.go   # get recorded hash
-   cd ../pi-mono && git log --oneline <recorded-hash>..HEAD -- packages/ai/scripts/generate-models.ts
-   ```
-
-2. **If the generator script changed:** Apply equivalent logic changes to `cmd/generate-models/main.go` first, then regenerate. Update `// Upstream hash:` in the generator.
-
-3. **If only the output changed** (new models added by external API or upstream data): Just re-run the generator — no Go code changes needed.
-
-4. Regenerate:
-   ```bash
-   make generate-models
-   ```
-
-5. Verify:
-   ```bash
-   go build ./... && go test ./pkg/ai/...
-   ```
-
-### File not in UPSTREAM_MAP.md
-
-Check if it belongs to a package we don't port (`packages/mom`, `packages/tui-server`, etc.). If so, skip it — no Go action needed.
-
-If it's a new file that *should* be ported, add it to `UPSTREAM_MAP.md` and port it following the normal port process.
-
----
-
-## Step 3 — Update the baseline
-
-After all Go files are updated and tests pass:
+Compare against the `VERSION` constant in `scripts/build_data.py`:
 
 ```bash
-bash sync/sync-record.sh ../pi-mono
+grep 'VERSION' scripts/build_data.py
 ```
 
-Verify it's clean:
+If the latest release matches the current VERSION — no update needed. Stop here.
+
+---
+
+## Step 2 — Update the build script
+
+Edit `scripts/build_data.py`: update the `VERSION` constant to the new release string (e.g. `"2026-05"`).
+
+```python
+VERSION = "2026-05"  # ← new release
+```
+
+The `BASE_URL` is constructed from `VERSION`, so that's the only change needed in most cases.
+
+Also clear the SQLite cache so the new files are downloaded:
 
 ```bash
-bash sync/sync-check.sh ../pi-mono
-# Expected: No upstream changes detected.
+rm -f scripts/.cache/bg-en.sqlite3 scripts/.cache/en-bg.sqlite3
 ```
 
 ---
 
-## Step 4 — Log the sync
+## Step 3 — Rebuild data
 
-Append an entry to `sync/SYNC_LOG.md`:
+```bash
+python3 scripts/build_data.py 2>&1
+```
+
+This downloads the new SQLite files (~18 MB total) and regenerates `public/data/bg-en.json` and `public/data/en-bg.json`. Allow several minutes for the download.
+
+**Verify:**
+- Both files exist and are non-empty
+- Entry counts are plausible (≥40k each):
+  ```bash
+  python3 -c "
+  import json
+  for name in ['bg-en', 'en-bg']:
+      d = json.load(open(f'public/data/{name}.json'))
+      print(f'{name}: {len(d[\"entries\"]):,} entries, version={d[\"version\"]}')
+  "
+  ```
+
+---
+
+## Step 4 — Run tests
+
+```bash
+npm test 2>&1
+```
+
+The tests in `scripts/test_search.mjs` validate data integrity, entry format, sorting, specific known words, and metadata. All must pass.
+
+If tests fail:
+- Check that known words (`баба`, `house`, `go`) still exist in the new data
+- Check that metadata (`meta` field) is still present and populated
+- If the new WikiDict release changed a field format, update `scripts/build_data.py` accordingly
+- Re-run `python3 scripts/build_data.py` and `npm test` until all pass
+
+---
+
+## Step 5 — Build app
+
+```bash
+npm run build 2>&1
+```
+
+**Verify:** exit code 0. The new data files will be included in `dist/data/`.
+
+---
+
+## Step 6 — Update CHANGELOG.md
+
+Add an entry under `## [Unreleased]`:
 
 ```markdown
-## YYYY-MM-DD — Sync to commit <short-hash>
-
-- `path/to/changed.ts` → `pkg/foo/bar.go`: One-line description of what changed.
-- `models.generated.ts` → `pkg/ai/models_generated.go`: Added N new models (list notable ones).
+### Changed
+- Updated dictionary data to WikiDict YYYY-MM release (bg-en: N entries, en-bg: N entries)
 ```
 
 ---
 
-## Common patterns
+## Step 7 — Commit
 
-### TS `static Foo.create(path?)` → Go `NewFoo(path string)`
+```bash
+git add scripts/build_data.py CHANGELOG.md
+git commit -m "data: update to WikiDict YYYY-MM release"
+```
 
-Upstream often refactors constructors to factory methods. In Go, keep the `NewFoo` convention.
-
-### TS `AuthStorage.inMemory(data)` → Go `NewInMemoryAuthStorage(data)`
-
-In-memory variants are used in tests. Same pattern — just a `NewFooInMemory` or `NewInMemory` helper.
-
-### TS `async withLockAsync(fn)` → Go `WithLockAsync(fn func(...) (..., error))`
-
-Go doesn't have async/await. Use a synchronous callback with an `error` return; the caller runs it inline under a `sync.Mutex`.
-
-### TS `drainErrors()` → Go `DrainErrors()`
-
-Go uses exported PascalCase. The pattern (drain + clear a slice of accumulated errors) is identical.
-
-### Barrel file changes (`src/index.ts`)
-
-These only export new TS types. In Go, all types are already directly accessible from their packages. No action needed.
+Do **not** commit `public/data/*.json` (they are in `.gitignore` and regenerated by CI) or `scripts/.cache/` (large SQLite files).
 
 ---
 
 ## Rules
 
-- **Never update the baseline before verifying `go build ./... && go test ./...` passes.**
-- **Don't skip changed files.** If a file changed but the Go side is already correct (e.g., we anticipated the change), still update the baseline — but confirm it's really in sync first.
-- **One baseline update at the end**, not per-file. Run `sync-record.sh` once after all files are done.
-- **Keep `// Upstream hash:` accurate.** It's the single source of truth for "what state of the TS source does this Go file reflect."
+- **Never commit `scripts/.cache/`** — SQLite files are ~18 MB.
+- **Never commit `public/data/*.json`** — they are regenerated by the GitHub Actions workflow at deploy time.
+- **Tests must pass before committing.** A broken data release means a broken app.
+- **Don't change `scripts/build_data.py` logic** beyond the VERSION constant unless the new WikiDict release changed its schema. If the schema changed, read the new SQLite structure first:
+  ```bash
+  sqlite3 scripts/.cache/bg-en.sqlite3 ".schema"
+  ```

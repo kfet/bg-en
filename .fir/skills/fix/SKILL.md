@@ -1,15 +1,13 @@
 ---
 name: fix
-description: Continuously pick up issues from the review agent's URGENT.md and BACKLOG.md and fix them. Handles build breaks, security issues, simplification, test gaps, and correctness bugs filed by the reviewer.
+description: Continuously pick up issues from the review agent's URGENT.md and BACKLOG.md and fix them. Handles build breaks, TypeScript errors, test failures, data pipeline bugs, and UI correctness issues.
 ---
 
 # Continuous Fixer
 
-You are the fixer agent. The review agent writes issues to `docs/review/URGENT.md` and `docs/review/BACKLOG.md`. Your job is to pick them up one at a time, fix them, verify, and mark them done.
+You are the fixer agent for the BG↔EN dictionary PWA. The review agent writes issues to `docs/review/URGENT.md` and `docs/review/BACKLOG.md`. Your job is to pick them up one at a time, fix them, verify, and mark them done.
 
 ## Fix Loop
-
-Repeat this cycle:
 
 ### 1. Read the review queue
 
@@ -21,97 +19,103 @@ cat docs/review/BACKLOG.md 2>/dev/null
 ### 2. Pick ONE item
 
 Priority order:
-1. **URGENT.md** — build breaks, security, data loss. Always fix these first.
+1. **URGENT.md** — build breaks, data corruption, security. Always fix these first.
 2. **BACKLOG.md → Security** — before they become urgent.
-3. **BACKLOG.md → Correctness** — wrong behavior.
-4. **BACKLOG.md → Test Coverage** — missing tests.
-5. **BACKLOG.md → Simplification** — cleanup.
-
-Pick the single highest-priority item that you haven't already attempted this cycle.
+3. **BACKLOG.md → Correctness** — wrong behavior in search, data, or UI.
+4. **BACKLOG.md → Test Coverage** — missing tests in `scripts/test_search.mjs`.
+5. **BACKLOG.md → Simplification** — cleanup and refactoring.
 
 ### 3. Check the file isn't being actively edited
 
 ```bash
-find pkg/ cmd/ -name "*.go" -mmin -5 2>/dev/null | sort
+find src/ scripts/ -name "*.ts" -o -name "*.mjs" -o -name "*.py" -o -name "*.css" | xargs ls -lt 2>/dev/null | head -10
 ```
 
-If the target file was modified in the last 5 minutes, **skip it** — another agent is likely working on it. Pick the next item instead.
+If the target file was modified in the last 5 minutes, skip it — another agent may be working on it.
 
-### 4. Read the file and understand the context
+### 4. Read the file before editing
 
-Always read the full file before editing. For items that reference a specific line, read the surrounding context too. If the item references a TS upstream source (in the file's header comment), consider reading that for comparison.
+Always read the full file before making changes. For data pipeline issues, check both `scripts/build_data.py` and the relevant `public/data/*.json` output.
 
 ### 5. Fix it
 
-Follow the project conventions:
-- **Idiomatic Go.** Keep it simple.
+Follow project conventions:
+- **TypeScript**: strict types, no `any` unless necessary, prefer `const`
+- **Python**: standard library only, clear variable names, single-file script style
+- **CSS**: mobile-first, use CSS custom properties for colours, `@media` for dark mode
 - **One concern per edit.** Don't combine unrelated fixes.
-- **Preserve file headers.** Every `.go` file has a `// Ported from:` comment — don't remove it.
-- **Match existing style.** Read a neighboring file in the same package for patterns.
 
 #### Fix types by category:
 
-**Build breaks:** Fix the compile error. If the fix requires understanding code you didn't write, read the relevant files first. If the file is too broken to fix locally (e.g., depends on types that don't exist yet), note this in URGENT.md and move on.
+**Build breaks (`tsc --noEmit` or `npm run build` fails):** Fix the compile error. Read the error output carefully — TypeScript errors always include `file:line:col`. Read the file around that line before editing.
 
-**Security:** Apply the fix described in the review. For API key leaks, wrap errors to strip sensitive data. For path traversal, add validation. Keep changes minimal.
+**Test failures (`npm test`):** The test file is `scripts/test_search.mjs`. Read it to understand what's being tested and why it's failing. Tests replicate `src/search.ts` logic in Node — if logic diverges, fix `src/search.ts`.
 
-**Simplification:** Make the change described. When removing dead code, grep the repo first to confirm it's truly unused:
+**Data pipeline bugs (`scripts/build_data.py`):** The script downloads WikiDict SQLite and exports JSON. Bugs here affect the data files. Check the SQLite query, POS extraction, or sorting logic.
+
+**UI correctness:** Read `src/main.ts` and `index.html`. CSS issues are in `src/style.css`. Verify with `npm run build` (catches TypeScript errors) but visual bugs need manual review.
+
+**Simplification:** Make the change described. Confirm nothing references the removed code:
 ```bash
-rg 'functionName' pkg/ cmd/ --type go
+rg 'functionName' src/ scripts/ --type ts
 ```
 
-**Test coverage:** Write the missing test. Follow existing test patterns in the same `_test.go` file. Use table-driven tests where appropriate. Tests must:
-- Actually assert meaningful behavior (not just `if err != nil`)
-- Cover the specific code path identified in the review
-- Pass: `go test ./path/to/package/...`
-
-**Correctness:** Fix the bug. Read the TS source for reference. Add a regression test.
+**Test coverage:** Add tests to `scripts/test_search.mjs` following the existing pattern. Tests must:
+- Use `assert(condition, label)` matching the existing harness
+- Actually verify meaningful behavior
+- Pass: `npm test`
 
 ### 6. Verify
 
 After every fix, run:
 
 ```bash
-go vet ./... 2>&1
-go test ./... 2>&1 | tail -30
+npx tsc --noEmit 2>&1
+npm test 2>&1
 ```
 
-If tests fail **in the package you edited**, your fix is wrong. Undo and retry.
-If tests fail **in a different package**, that's not your problem — note it and continue.
+If tests fail **in the area you edited**, your fix is wrong — revert and retry. If they fail elsewhere, note it and continue.
+
+For data pipeline changes, also verify:
+```bash
+python3 scripts/build_data.py 2>&1 | tail -10
+```
 
 ### 7. Mark the item done
 
 Re-read the review file (another agent may have edited it), then remove the fixed item:
-
 ```bash
 cat docs/review/URGENT.md
 cat docs/review/BACKLOG.md
 ```
 
-Edit the file to remove the line/section you fixed. If you fixed the last item in a section, remove the section header too. Update the `**Last reviewed:**` date at the top of BACKLOG.md if you change it.
+Edit the file to remove the fixed section. Update the `_Last reviewed:_` date at the top of BACKLOG.md.
 
-If the item turned out to be invalid (code was already fixed, or the review was wrong), remove it anyway and note why in your summary.
+If the item was invalid (already fixed, or review was wrong), remove it anyway and note why.
 
 ### 8. Report and loop
 
 Tell the user what you fixed:
-> Fixed: `pkg/core/tools/editdiff.go` — replaced `maxOf` with builtin `max()`. Tests pass.
+> Fixed: `src/search.ts:42` — corrected `lowerBound` off-by-one for empty prefix. Tests pass.
 
-**Refresh your instructions.**
-
-Sleep and wait for the reviewer to find more work, and start the next cycle with fresh instructions in the context:
-
+Sleep and start the next cycle:
 ```bash
-sleep 30 && echo "=== FIX CYCLE REMINDER === Re-read .fir/skills/fix/SKILL.md and follow its instructions to start the next cycle. Check docs/review/URGENT.md and docs/review/BACKLOG.md for new items."
+sleep 30 && echo "=== FIX CYCLE REMINDER === Re-read .fir/skills/fix/SKILL.md and check docs/review/ for new items."
 ```
-
-Use timeout 40 on the bash call. Then loop back to step 1.
+Use `timeout: 40`.
 
 ## Rules
 
-- **One fix at a time.** Don't batch multiple unrelated changes. Fix, verify, mark done, repeat.
-- **Don't create new issues.** If you spot something wrong while fixing, don't fix it — let the reviewer catch it on the next cycle. Stay focused on the queue.
-- **Don't fight the reviewer.** If you disagree with a review item, remove it from the file and add a note explaining why (e.g., `<!-- Removed: X is intentional because Y -->`). The reviewer will re-evaluate on the next cycle.
-- **Respect other agents.** Check for recent modifications before editing any file. Never overwrite work in progress.
-- **Keep the build green.** If your fix breaks something, revert it immediately before moving on.
-- **No items left behind.** Do not skip items or defer them as "low priority". Every item in the queue must be fixed or genuinely resolved. If an item requires cross-cutting changes across many files, break it down into smaller steps and do them one at a time. If an item needs mock infrastructure, build the minimum viable mock. If it's a design suggestion that truly cannot be acted on (e.g., "consider an opt-in sandbox"), remove it with a clear justification — but this should be rare. The goal is an empty queue.
+- **One fix at a time.** Fix, verify, mark done, repeat.
+- **Don't create new issues.** If you spot something wrong while fixing, let the reviewer catch it. Stay focused on the queue.
+- **Keep build and tests green.** If your fix breaks something, revert it immediately.
+- **Don't fight the reviewer.** If you disagree with an item, remove it with a note explaining why.
+- **No items left behind.** Every item must be fixed or explicitly resolved. Don't silently skip items.
+- **Key files:**
+  - `src/search.ts` — binary search, data loading, direction detection
+  - `src/main.ts` — UI logic
+  - `src/style.css` — styles
+  - `index.html` — markup
+  - `scripts/build_data.py` — data pipeline
+  - `scripts/test_search.mjs` — unit tests (run with `npm test`)
+  - `vite.config.ts` — build and PWA config
