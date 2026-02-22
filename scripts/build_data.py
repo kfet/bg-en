@@ -491,6 +491,9 @@ def export_dataset(name: str, kaikki_index: dict, en_ipa: dict, en_morph: dict) 
 def main() -> None:
     print(f"Building dictionary data (WikiDict {VERSION})\n")
 
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    os.makedirs(OUT_DIR, exist_ok=True)
+
     # Bulgarian: kaikki (IPA, gender, inflections)
     print("--- kaikki (Bulgarian IPA / gender / inflections) ---")
     kaikki_path = download_file(
