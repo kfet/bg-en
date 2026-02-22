@@ -1181,7 +1181,7 @@ If not already done in T07's CSS (which specifies dark mode via `@media prefers-
 > All seven tasks touch only `src/main.ts`, `index.html`, and `src/style.css`; no data pipeline changes.
 
 ### T16 · iOS "Add to Home Screen" hint on the empty state
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1204,7 +1204,7 @@ Add CSS for `.ios-hint` — card style, muted-blue border, icon on the left, dis
 ---
 
 ### T17 · Recent searches (tappable chips)
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1229,7 +1229,7 @@ Add CSS for `.chip-row` (horizontal flex, wrapping), `.chip` (pill button, surfa
 ---
 
 ### T18 · Page title tracks the current query
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1248,7 +1248,7 @@ One line. Call it unconditionally at the start of `runSearch()`.
 ---
 
 ### T19 · Scroll to top when a new search is typed
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1266,7 +1266,7 @@ This ensures results are visible even if the user had scrolled deep into a previ
 ---
 
 ### T20 · Web Share API on result cards
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1300,7 +1300,7 @@ Add CSS for `.share-btn` — small, borderless, emoji, aligned to the right of `
 ---
 
 ### T21 · Example searches on the empty state
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07, T16, T17 (shares `renderEmptyState()`)
 **Agent**: any
 
@@ -1319,7 +1319,7 @@ Use the same `.chip` style as T17 but add `.chip-example` for a slightly differe
 ---
 
 ### T22 · Offline / online status indicator
-**Status**: `[ ]`
+**Status**: `[x]`
 **Depends on**: T07
 **Agent**: any
 
@@ -1401,8 +1401,8 @@ type Entry = [
 | 3 · PWA | T08 T09 | 2 | 0 |
 | 4 · Deploy | T10 T11 | 2 | 0 |
 | 5 · Polish | T12–T15 | 4 | 0 |
-| 6 · QoL | T16–T22 | 0 | 7 |
-| **Total** | **22** | **15** | **7** |
+| 6 · QoL | T16–T22 | 7 | 0 |
+| **Total** | **22** | **22** | **0** |
 
 ---
 
@@ -1416,3 +1416,4 @@ type Entry = [
 | T09 | Claude Code | 2026-02-21 | Verified SW has CacheFirst strategy for dict-data-v1; data files in dist/data/. Marked done (browser test deferred to manual QA). |
 | T12–T15 | Claude Code | 2026-02-21 | Polish: Escape clears, Ctrl+L focuses, auto-detect emoji indicator, copy button (📋) with 1.5s feedback, progress bar with CSS transition, dark/light theme toggle with localStorage. All features in main.ts; index.html and style.css updated. `npm run build` green. |
 | T09,T12–T15 | Claude Code | 2026-02-21 | T09: HTTP smoke test verified (all endpoints 200, smoke_test.js written). T12–T15: Already implemented in main.ts/index.html/style.css — keyboard shortcuts (Escape/Ctrl+L), copy buttons, progress bar, dark mode toggle with localStorage. All 15 tasks complete. `npm run build` green. |
+| T16–T22 | Claude Code | 2026-02-22 | All 7 QoL features implemented in src/main.ts, index.html, src/style.css. T16: iOS install hint with dismiss (localStorage-persisted). T17: Recent searches (8-item localStorage ring, deduped). T18: Document title tracks query. T19: scrollTo({top:0}) on non-empty search. T20: Web Share API button on each result card (navigator.share feature-detected). T21: Example search chips on empty state. T22: Offline/online banner driven by navigator.onLine events. Documented in plan.md Phase 6. `npx tsc --noEmit && npm test (39/39) && npm run build` all green. |

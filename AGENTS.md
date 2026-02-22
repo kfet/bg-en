@@ -161,26 +161,13 @@ Check these before starting any work session.
 
 ## Current state
 
-All 15 Phase 0–5 tasks are complete (see `plan.md`). The app is live at https://kfet.github.io/bg-en/.
+All 22 tasks (Phases 0–6) are complete (see `plan.md`). The app is live at https://kfet.github.io/bg-en/.
 
-**7 QoL tasks are open (Phase 6, T16–T22) — all now complete ✅**
-
-| Task | Feature | Status |
-|------|---------|--------|
-| T16 | iOS "Add to Home Screen" hint on empty state | `[x]` |
-| T17 | Recent searches — tappable chips on empty state | `[x]` |
-| T18 | Page title tracks current query | `[x]` |
-| T19 | Scroll to top when new search is typed | `[x]` |
-| T20 | Web Share API button on result cards | `[x]` |
-| T21 | Example searches on empty state | `[x]` |
-| T22 | Offline / online status banner | `[x]` |
-
-T16, T17, and T21 all contribute to the same `renderEmptyState()` function — implement them together. T18 and T19 are one-liners. T20 and T22 are self-contained additions.
+Active work is tracked via the `docs/review/` queue and `CHANGELOG.md [Unreleased]` section.
 
 **To start a new feature or fix:**
 1. Check `docs/review/URGENT.md` and `docs/review/BACKLOG.md` for existing issues
-2. Pick an open task from Phase 6 above (or the review queue)
-3. Make changes in `src/`, `scripts/`, or `index.html`
-4. Verify: `npx tsc --noEmit && npm test && npm run build`
-5. Update `CHANGELOG.md` under `## [Unreleased]`
-6. Commit with a clear message; push triggers auto-deploy
+2. Make changes in `src/`, `scripts/`, or `index.html`
+3. Verify: `npx tsc --noEmit && npm test && npm run build`
+4. Update `CHANGELOG.md` under `## [Unreleased]`
+5. Commit with a clear message; push triggers auto-deploy
