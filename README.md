@@ -2,7 +2,7 @@
 
 Installable offline PWA dictionary for Bulgarian ↔ English, powered by [WikiDict](https://www.wikdict.com) data (derived from Wiktionary).
 
-**Live app**: https://YOUR-USERNAME.github.io/bg-en/   ← update after deploying
+**Live app**: https://kfet.github.io/bg-en/
 
 ## Features
 
