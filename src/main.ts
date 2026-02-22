@@ -374,6 +374,22 @@ async function boot(): Promise<void> {
 
 void boot()
 
+// ── iOS PWA: focus search field on every app open ────────────────────────────
+// On iOS, .focus() only raises the keyboard when called inside a synchronous
+// browser-lifecycle event handler (pageshow fires on both fresh launch and
+// app-resume from the home screen).  navigator.standalone is true only when
+// running as an installed PWA on iOS.
+{
+  const isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  const isStandalone = 'standalone' in navigator && (navigator as { standalone?: boolean }).standalone === true
+  if (isIOS && isStandalone) {
+    window.addEventListener('pageshow', () => {
+      // rAF lets the page finish painting before we steal focus
+      requestAnimationFrame(() => searchInput.focus())
+    })
+  }
+}
+
 // ── PWA: Install ─────────────────────────────────────────────────────────────
 
 window.addEventListener('beforeinstallprompt', (e: Event) => {
