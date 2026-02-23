@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-02-22
+
+### Added
+- **App version display** (`src/main.ts`, `src/style.css`, `index.html`): The current version string (from `VERSION`) is now displayed in the footer next to the MIT license link.
+
 ## [0.2.0] - 2026-02-22
 
 ### Added
