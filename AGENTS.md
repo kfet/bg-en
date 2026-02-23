@@ -62,7 +62,7 @@ npm run dev
 npm run build
 
 # Rebuild data files (downloads ~18 MB WikiDict SQLite + extras, ~5 min first run)
-python3 scripts/build_data.py
+uv run scripts/build_data.py
 
 # Optional Playwright smoke test (requires: npm i -D playwright; app served at :5177)
 node scripts/smoke_test.js
