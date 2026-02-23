@@ -1,15 +1,14 @@
 # Review Backlog
 
-_Last reviewed: 2026-02-22 (cycle 8). Files reviewed: src/main.ts, src/style.css, index.html, CHANGELOG.md. Build: passing. Tests: 42/42 pass._
+_Last reviewed: 2026-02-22 (cycle 11, post-fix). Files reviewed: scripts/test_search.mjs, src/main.ts, src/style.css, index.html, CHANGELOG.md. Build: passing. Tests: 48/48 pass._
 
-<!-- All items from cycle 7 resolved 2026-02-22:
+<!-- Resolved this cycle (2026-02-22):
 
-  - Correctness: EN→BG sense always hidden even when no BG details available — FIXED.
-    Hoisted `bgDetails` array out of the `if (dir === 'en-bg')` block so its length is visible
-    to the sense condition below. Changed `dir !== 'en-bg'` to `dir !== 'en-bg' || bgDetails.length === 0`.
-    src/main.ts ~line 334.
-
-  - Simplification/Documentation: duplicate `### Fixed` sections and missing EN→BG feature entry in CHANGELOG.md — FIXED.
-    Merged the two `### Fixed` blocks into one. Added `### Added` entry for EN→BG word details feature.
-    Removed stale "now 40 tests" note (tests are now 42).
+  - Simplification/Documentation: stale "42 tests total" in CHANGELOG.md — FIXED. Updated to "48 tests total".
+  - Test Coverage: lookupExact had no assertions — FIXED. 6 assertions added; tests now 48.
+  - Test Coverage: sort-order sampling was every 1000th entry — FIXED. Now samples every 20th (~5% of consecutive pairs).
+  - Accessibility: #results div had no aria-live — FIXED. aria-live="polite" added to index.html.
+  - Simplification: installBtn async-in-then pattern — FIXED. Rewritten as async IIFE.
+  - Simplification: dead CSS .row-hidden — FIXED. Removed from style.css.
+  - Simplification/Documentation: two separate ### Added sections in CHANGELOG — FIXED. Merged into one.
 -->

@@ -356,6 +356,31 @@ function renderEntries(entries: Entry[], dir: Direction): void {
         }
       }
 
+      // EN word details (IPA, irregular forms) — shown when searching BG→EN
+      const enDetails: string[] = []
+      if (dir === 'bg-en') {
+        for (const t of translations) {
+          const enMeta = getMeta(t, 'en-bg')
+          if (!enMeta) continue
+          const parts: string[] = [`<span class="en-detail-word">${escHtml(t)}</span>`]
+          if (enMeta.ipa)  parts.push(`<span class="ipa">${escHtml(enMeta.ipa)}</span>`)
+          if (enMeta.pl)   parts.push(`<span class="inflect">pl: <em>${escHtml(enMeta.pl)}</em></span>`)
+          if (enMeta.past) {
+            parts.push(`<span class="inflect">past: <em>${escHtml(enMeta.past)}</em></span>`)
+            if (enMeta.pp && enMeta.pp !== enMeta.past)
+              parts.push(`<span class="inflect">pp: <em>${escHtml(enMeta.pp)}</em></span>`)
+          }
+          if (enMeta.cmp) {
+            parts.push(`<span class="inflect">cmp: <em>${escHtml(enMeta.cmp)}</em></span>`)
+            if (enMeta.sup) parts.push(`<span class="inflect">sup: <em>${escHtml(enMeta.sup)}</em></span>`)
+          }
+          if (parts.length > 1) enDetails.push(`<span class="en-detail-entry">${parts.join(' ')}</span>`)
+        }
+        if (enDetails.length) {
+          html.push(`<div class="en-details">${enDetails.join('')}</div>`)
+        }
+      }
+
       // Sense / definition — shown for BG→EN always; shown for EN→BG only when no BG details available
       if (cleanSense && (dir !== 'en-bg' || bgDetails.length === 0)) {
         const senses = cleanSense.split(' | ').map(s => s.trim()).filter(Boolean)
@@ -554,11 +579,12 @@ window.addEventListener('beforeinstallprompt', (e: Event) => {
 
 installBtn.addEventListener('click', () => {
   if (!deferredInstallPrompt) return
-  void deferredInstallPrompt.prompt().then(async () => {
+  void (async () => {
+    await deferredInstallPrompt!.prompt()
     const result = await deferredInstallPrompt!.userChoice
     if (result.outcome === 'accepted') installBanner.classList.add('hidden')
     deferredInstallPrompt = null
-  })
+  })()
 })
 
 installDismiss.addEventListener('click', () => installBanner.classList.add('hidden'))

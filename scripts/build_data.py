@@ -15,15 +15,16 @@ Downloads:
 
 Outputs:
     public/data/bg-en.json   (entries + meta: IPA/gender/plural/aspect)
-    public/data/en-bg.json   (entries only)
+    public/data/en-bg.json   (entries + meta: IPA/irregular forms)
 
 JSON format:
     {
       "version": "2025-11",
       "entries": [["written_rep", "trans_list", "sense_list", "pos"], ...],
-      "meta": {                          <- bg-en only
+      "meta": {
         "баба":  {"ipa":"[ˈba.ba]","gender":"f","pl":"баби"},
-        "ходя":  {"ipa":"[ˈxodʲɐ]","aspect":"impf","paired":"отида"},
+        "house": {"ipa":"/ˈhaʊs/"},
+        "go":    {"ipa":"/ˈɡoʊ/","past":"went","pp":"gone"},
         ...
       }
     }
@@ -452,6 +453,12 @@ def export_dataset(name: str, kaikki_index: dict, en_ipa: dict, en_morph: dict) 
 
     entries = []
     for written_rep, trans_list, all_senses, lexentry, _score in rows:
+        # WikiDict reverse-mapping can produce headwords like "1:2cab" or "2:3car"
+        # (rank-prefixed sense references).  Strip the prefix so the entry is
+        # reachable by binary search, just like clean_trans() does for translations.
+        written_rep = _RANK_PREFIX.sub("", written_rep).strip()
+        if not written_rep:
+            continue
         pos   = extract_pos(lexentry or "")
         trans = clean_trans(trans_list or "")
         sense = (all_senses  or "").strip()
@@ -464,7 +471,10 @@ def export_dataset(name: str, kaikki_index: dict, en_ipa: dict, en_morph: dict) 
             sense = " | ".join(seen)
         entries.append([written_rep, trans, sense, pos])
 
-    entries.sort(key=lambda e: e[0].casefold())
+    # Strip combining acute accent (U+0301, used as stress mark in BG headwords)
+    # before sorting, so that fold() in search.ts (which does the same) finds
+    # entries in the correct bin.  e.g. "ко́тка" must sort alongside "котка".
+    entries.sort(key=lambda e: e[0].replace(ACUTE, '').casefold())
 
     # Build meta dict from kaikki (bg-en) or ipa-dict + unimorph (en-bg)
     meta: dict = {}

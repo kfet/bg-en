@@ -57,18 +57,19 @@ export async function loadDictionary(
 
   loadPromise = (async () => {
     onProgress?.(0)
-    // Load both datasets in parallel — roughly halves first-load time
-    let loaded = 0
-    const tick = () => {
-      loaded++
-      onProgress?.(loaded === 1 ? 55 : 100)
-    }
+    // Load both datasets in parallel — roughly halves first-load time.
+    // NOTE: onProgress(55) fires from whichever file finishes first.
+    // onProgress(100) is intentionally moved AFTER bgEnData/enBgData are
+    // assigned — callers that act on 100% (e.g. URL-param search on boot)
+    // are guaranteed to see the data already in memory.
+    let loadedCount = 0
     const [bg, en] = await Promise.all([
-      fetchDataset('bg-en').then(d => { tick(); return d }),
-      fetchDataset('en-bg').then(d => { tick(); return d }),
+      fetchDataset('bg-en').then(d => { loadedCount++; if (loadedCount === 1) onProgress?.(55); return d }),
+      fetchDataset('en-bg').then(d => { loadedCount++; if (loadedCount === 1) onProgress?.(55); return d }),
     ])
     bgEnData = bg
     enBgData = en
+    onProgress?.(100)
   })()
 
   return loadPromise
@@ -80,9 +81,14 @@ export function isLoaded(): boolean {
 
 // ── Case folding ──────────────────────────────────────────────────────────────
 
-/** Case-insensitive fold. Uses toLowerCase() — good for both Cyrillic and Latin. */
+/**
+ * Case-insensitive fold for binary search.
+ * Strips the combining acute accent (U+0301) used as a stress mark in many
+ * Bulgarian headwords (e.g. "ко́тка" → "котка") so that accent-free user
+ * input matches accented dictionary headwords.
+ */
 function fold(s: string): string {
-  return s.toLowerCase()
+  return s.replace(/\u0301/g, '').toLowerCase()
 }
 
 // ── Binary search ─────────────────────────────────────────────────────────────
