@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-02-22
+
 ### Added
 - **OpenSearch / browser search-engine integration** (`public/opensearch.xml`, `index.html`): added an OpenSearch Description Document so browsers (Firefox, Chromium-based, Safari) can discover and register the site as a custom search engine. Right-clicking the address bar or the search input now offers "Add as search engine". The URL template is `https://kfet.github.io/bg-en/?q={searchTerms}`. Added `<link rel="search" ...>` in `<head>` and `name="q"` on the input so browsers can auto-detect the query parameter.
 
