@@ -182,6 +182,8 @@ assert(good_meta?.sup === 'best',   `good meta sup=best   (got ${good_meta?.sup}
 const validPos = new Set(['n', 'prop.n', 'v', 'adj', 'adv', 'prep', 'part', 'num', 'interj', 'pron', 'conj', 'det', ''])
 const badPos = bgEn.entries.map(e => e[3]).filter(p => !validPos.has(p))
 assert(badPos.length === 0, `all POS values are valid (unexpected: ${JSON.stringify(badPos.slice(0,5))})`)
+const badPosEN = enBg.entries.map(e => e[3]).filter(p => !validPos.has(p))
+assert(badPosEN.length === 0, `all en-bg POS values are valid (unexpected: ${JSON.stringify(badPosEN.slice(0,5))})`)
 
 // Check sorted order of full dataset (sample ~5% of consecutive pairs, step 20)
 let globalSorted = true

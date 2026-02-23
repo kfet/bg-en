@@ -124,7 +124,7 @@ type WordMeta = {
 - `entries` is sorted by `entry[0].toLowerCase()` — binary search depends on this
 - Multiple entries may share the same `written_rep` (different POS)
 - `trans_list` separator is ` | ` (space-pipe-space)
-- Valid `pos` values: `"n"`, `"prop.n"`, `"v"`, `"adj"`, `"adv"`, `"prep"`, `"part"`, `"num"`, `""`
+- Valid `pos` values: `"n"`, `"prop.n"`, `"v"`, `"adj"`, `"adv"`, `"prep"`, `"part"`, `"num"`, `"interj"`, `"pron"`, `"conj"`, `"det"`, `""`
 
 ---
 

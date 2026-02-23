@@ -1,18 +1,19 @@
 # Review Backlog
 
-_Last reviewed: 2026-02-22 (cycle 23, post-c851511). Files reviewed: .github/workflows/deploy.yml, src/search.ts, src/main.ts, src/style.css, index.html, scripts/build_data.py, scripts/test_search.mjs, scripts/smoke_test.js, vite.config.ts, CHANGELOG.md. Build: passing. Tests: 54/54 pass._
+_Last reviewed: 2026-02-22 (cycle 24). Files reviewed: AGENTS.md, scripts/test_search.mjs. Build: passing. Tests: 55/55 pass._
 
 ---
 
 ## No open items
 
 All backlog items from the current review cycle have been fixed or accepted.
-The queue is clear. The next review cycle will populate new items.
 
 ---
 
-<!-- Resolved (2026-02-22, commits 8f3ad5a + 158c1fd + c851511 + fb8aa99):
+<!-- Resolved (2026-02-22, all commits):
 
+  - Test Coverage: POS validity assertion checked bgEn.entries only — FIXED. Added matching badPosEN assertion on enBg.entries; tests now 55.
+  - Documentation: AGENTS.md valid POS list had only 9 values, missing interj/pron/conj/det — FIXED. Updated to all 13 values.
   - URGENT: Staged accent-fix not committed; 35% of BG headwords unreachable — FIXED.
   - URGENT: onProgress(100) race condition — FIXED.
   - Correctness: highlightPrefix accent bug — FIXED.
@@ -30,11 +31,6 @@ The queue is clear. The next review cycle will populate new items.
   - Accessibility: #results div had no aria-live — FIXED.
   - Simplification: installBtn async-in-then pattern — FIXED.
   - Simplification: dead CSS .row-hidden — FIXED.
-  - Simplification: CSS dark-mode var duplication (style.css:27-69 + 480-488 + 705-713) — ACCEPTED AS-IS.
-    There is no clean CSS-only deduplification without CSS nesting (partial browser support).
-    The two blocks (media query + attribute selector) are idiomatic and ~45 lines total;
-    maintenance burden is low since check-data-update.yml updates both blocks atomically.
+  - Simplification: CSS dark-mode var duplication — ACCEPTED AS-IS (no clean CSS-only fix).
   - Test Coverage: loadDictionary race condition regression test — ACCEPTED AS-IS (LOW PRIORITY).
-    Mock-based Node test risks brittleness by reimplementing internal Promise scheduling.
-    The fix is verified by code review and the moved onProgress(100) is clearly correct.
 -->
