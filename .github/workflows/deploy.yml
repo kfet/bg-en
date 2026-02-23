@@ -20,6 +20,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify deploy.yml cache key matches build_data.py VERSION
+        run: |
+          version=$(python3 -c "
+          import re, sys
+          m = re.search(r'VERSION\s*=\s*\"([^\"]+)\"', open('scripts/build_data.py').read())
+          if not m: sys.exit('VERSION not found in build_data.py')
+          print(m.group(1))
+          ")
+          echo "build_data.py VERSION: $version"
+          expected="wikdict-kaikki-ipadict-unimorph-${version}"
+          if ! grep -qF "key: ${expected}" .github/workflows/deploy.yml; then
+            echo "ERROR: Cache key in deploy.yml must be '${expected}' to match VERSION in build_data.py"
+            echo "       Update the 'key:' under 'Cache WikiDict SQLite' to match."
+            exit 1
+          fi
+          echo "✓ Cache key matches: ${expected}"
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

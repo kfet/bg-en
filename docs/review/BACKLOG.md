@@ -1,12 +1,6 @@
 # Review Backlog
 
-_Last reviewed: 2026-02-22 (cycle 22, post-158c1fd). Files reviewed: src/search.ts, src/main.ts, src/style.css, index.html, scripts/build_data.py, scripts/test_search.mjs, scripts/smoke_test.js, vite.config.ts, .github/workflows/deploy.yml, .github/workflows/check-data-update.yml, CHANGELOG.md. Build: passing. Tests: 54/54 pass._
-
----
-
-## Deployment
-
-- **`.github/workflows/deploy.yml:39`** — Cache key `wikdict-kaikki-ipadict-unimorph-2025-11` is hardcoded. For the normal monthly flow this is fine — `check-data-update.yml` updates **both** `VERSION` in `build_data.py` and the matching cache key in `deploy.yml` atomically in its PR. However, if a developer manually bumps `VERSION` in `build_data.py` without also updating the cache key, stale SQLite files are served from cache and outdated data is deployed silently. Consider adding a CI check (or a `pre-commit` hook) that asserts the version substring in the deploy.yml cache key matches `VERSION` in `build_data.py`.
+_Last reviewed: 2026-02-22 (cycle 23, post-c851511). Files reviewed: .github/workflows/deploy.yml, src/search.ts, src/main.ts, src/style.css, index.html, scripts/build_data.py, scripts/test_search.mjs, scripts/smoke_test.js, vite.config.ts, CHANGELOG.md. Build: passing. Tests: 54/54 pass._
 
 ---
 
@@ -22,22 +16,23 @@ _Last reviewed: 2026-02-22 (cycle 22, post-158c1fd). Files reviewed: src/search.
 
 ---
 
-<!-- Resolved (2026-02-22, commits 8f3ad5a + 158c1fd):
+<!-- Resolved (2026-02-22, commits 8f3ad5a + 158c1fd + c851511 + latest):
 
-  - URGENT: Staged accent-fix not committed; 35% of BG headwords unreachable — FIXED. fold() strips U+0301; build_data.py sort key matches.
-  - URGENT: onProgress(100) race condition — FIXED. Moved onProgress(100) after bgEnData/enBgData assignment.
-  - Correctness: highlightPrefix accent bug — FIXED. Uses exported fold() from search.ts with char-walk for U+0301.
-  - Correctness: loadPromise never reset on failure — FIXED. .catch resets loadPromise=null.
-  - Simplification: isLoaded() dead code — FIXED. Removed from search.ts.
-  - Documentation: Two separate ### Added sections in CHANGELOG — FIXED. Merged into one block.
+  - URGENT: Staged accent-fix not committed; 35% of BG headwords unreachable — FIXED.
+  - URGENT: onProgress(100) race condition — FIXED.
+  - Correctness: highlightPrefix accent bug — FIXED.
+  - Correctness: loadPromise never reset on failure — FIXED.
+  - Simplification: isLoaded() dead code — FIXED.
+  - Documentation: Two separate ### Added sections in CHANGELOG — FIXED.
   - Documentation: CHANGELOG "48 tests total" stale — FIXED. Updated to "54 tests total".
-  - Accessibility: #results role="list" ARIA violation — FIXED. Changed to role="region"; removed role="listitem" from article cards.
-  - Deployment: CacheFirst → StaleWhileRevalidate for dict-data cache — FIXED. vite.config.ts updated.
-  - Test Coverage: smoke_test.js stale selectors (#btn-en-bg, #btn-auto, port 5050) — FIXED. Rewritten to auto-detect via #dir-indicator; port updated to 5177; accent-insensitive test added.
+  - Accessibility: #results role="list" ARIA violation — FIXED. Changed to role="region".
+  - Deployment: CacheFirst → StaleWhileRevalidate for dict-data cache — FIXED.
+  - Deployment: Hardcoded cache key could silently serve stale data if VERSION bumped manually — FIXED. Added CI verify step in deploy.yml that extracts VERSION from build_data.py and asserts the cache key contains it; fails build with clear error if mismatched.
+  - Test Coverage: smoke_test.js stale selectors (#btn-en-bg, #btn-auto, port 5050) — FIXED.
   - Simplification/Documentation: stale "42 tests total" in CHANGELOG.md — FIXED.
-  - Test Coverage: lookupExact had no assertions — FIXED. 6 assertions added.
-  - Test Coverage: sort-order sampling was every 1000th entry — FIXED. Now every 20th.
-  - Accessibility: #results div had no aria-live — FIXED. aria-live="polite" added to index.html.
+  - Test Coverage: lookupExact had no assertions — FIXED.
+  - Test Coverage: sort-order sampling was every 1000th entry — FIXED.
+  - Accessibility: #results div had no aria-live — FIXED.
   - Simplification: installBtn async-in-then pattern — FIXED.
   - Simplification: dead CSS .row-hidden — FIXED.
 -->
