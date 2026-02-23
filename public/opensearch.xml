@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+  <ShortName>БГ–АН Речник</ShortName>
+  <Description>Bulgarian–English / English–Bulgarian dictionary search</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="192" height="192" type="image/png">https://kfet.github.io/bg-en/icons/icon-192.png</Image>
+  <Url type="text/html" method="get"
+       template="https://kfet.github.io/bg-en/?q={searchTerms}"/>
+</OpenSearchDescription>

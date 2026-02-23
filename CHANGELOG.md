@@ -3,6 +3,9 @@
 ## [Unreleased]
 
 ### Added
+- **OpenSearch / browser search-engine integration** (`public/opensearch.xml`, `index.html`): added an OpenSearch Description Document so browsers (Firefox, Chromium-based, Safari) can discover and register the site as a custom search engine. Right-clicking the address bar or the search input now offers "Add as search engine". The URL template is `https://kfet.github.io/bg-en/?q={searchTerms}`. Added `<link rel="search" ...>` in `<head>` and `name="q"` on the input so browsers can auto-detect the query parameter.
+
+### Added
 - **EN details in BG→EN results** (`src/main.ts`, `src/style.css`): when searching Bulgarian→English, each English translation now shows its IPA pronunciation and any irregular forms (plural, past/pp for verbs, comparative/superlative for adjectives) — mirroring the BG detail block that already appeared in EN→BG results. For example, searching "дете" shows "child /ˈtʃaɪɫd/ pl: children"; "вървя" shows translations with their past tense/pp where available.
 - **EN→BG details**: when searching English→Bulgarian, each translation chip now shows its Bulgarian pronunciation (IPA), grammatical gender, aspect (for verbs), and plural form — sourced from the kaikki bg-en metadata
 - **Test coverage** `scripts/test_search.mjs` — added sort-order assertion for en-bg dataset and rank-prefix regression tests for both datasets (54 tests total)
