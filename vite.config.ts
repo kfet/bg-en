@@ -8,7 +8,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,xml}'],
         runtimeCaching: [
           {
             urlPattern: /\/data\/(bg-en|en-bg)\.json$/,
