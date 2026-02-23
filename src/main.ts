@@ -332,8 +332,8 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       html.push(`</div>`) // .trans-main
 
       // BG word details (gender, plural, aspect) — shown when searching EN→BG
+      const bgDetails: string[] = []
       if (dir === 'en-bg') {
-        const bgDetails: string[] = []
         for (const t of translations) {
           const bgMeta = getMeta(t, 'bg-en')
           if (!bgMeta) continue
@@ -356,8 +356,8 @@ function renderEntries(entries: Entry[], dir: Direction): void {
         }
       }
 
-      // Sense / definition (shown for BG→EN; hidden for EN→BG since BG details replace it)
-      if (cleanSense && dir !== 'en-bg') {
+      // Sense / definition — shown for BG→EN always; shown for EN→BG only when no BG details available
+      if (cleanSense && (dir !== 'en-bg' || bgDetails.length === 0)) {
         const senses = cleanSense.split(' | ').map(s => s.trim()).filter(Boolean)
         if (senses.length === 1) {
           html.push(`<p class="sense">${escHtml(senses[0])}</p>`)
