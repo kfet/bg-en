@@ -4,10 +4,8 @@
 
 ### Added
 - **EN details in BG→EN results** (`src/main.ts`, `src/style.css`): when searching Bulgarian→English, each English translation now shows its IPA pronunciation and any irregular forms (plural, past/pp for verbs, comparative/superlative for adjectives) — mirroring the BG detail block that already appeared in EN→BG results. For example, searching "дете" shows "child /ˈtʃaɪɫd/ pl: children"; "вървя" shows translations with their past tense/pp where available.
-
-### Added
 - **EN→BG details**: when searching English→Bulgarian, each translation chip now shows its Bulgarian pronunciation (IPA), grammatical gender, aspect (for verbs), and plural form — sourced from the kaikki bg-en metadata
-- **Test coverage** `scripts/test_search.mjs` — added sort-order assertion for en-bg dataset and rank-prefix regression tests for both datasets (48 tests total)
+- **Test coverage** `scripts/test_search.mjs` — added sort-order assertion for en-bg dataset and rank-prefix regression tests for both datasets (54 tests total)
 - **T16** iOS "Add to Home Screen" hint on empty state — shown only on iOS Safari outside standalone mode; dismissible (persisted via `localStorage`)
 - **T17** Recent searches — tappable chips (up to 8) on the empty state, persisted via `localStorage`
 - **T18** Page title tracks current query — `<title>` updates to `word — БГ–АН Речник` while searching
@@ -19,6 +17,9 @@
 - **Documentation** — T16–T22 fully specified in `plan.md` Phase 6; `AGENTS.md` updated
 
 ### Fixed
+- **`loadDictionary` race condition** (`src/search.ts`): `onProgress(100)` now fires *after* `bgEnData`/`enBgData` are assigned, so URL-parameter boot searches (`?q=word`) always find the data ready instead of silently returning no results.
+- **`loadPromise` retry on failure** (`src/search.ts`): failed `loadDictionary` calls now reset `loadPromise = null` in the `.catch` handler, allowing retry on the next call instead of permanently returning the rejected promise.
+- **`highlightPrefix` accent-aware split** (`src/main.ts`): replaced `word.toLowerCase()` with the accent-stripping `fold()` from `search.ts` and walks the original string char-by-char (skipping U+0301) to compute the correct highlight split point. Previously, searching `"котка"` found the headword `"ко́тка"` via binary search but rendered it with no `<mark>` highlight.
 - **BG→EN accent-insensitive search** (`src/search.ts`, `scripts/build_data.py`): 35% of BG headwords (16,188 entries) carry a combining acute accent (U+0301) as a stress mark (e.g. "ко́тка"). Searching without the accent — as users always do — caused the binary search to miss them entirely. Fixed `fold()` in `search.ts` to strip U+0301 before comparison, and updated the sort key in `build_data.py` to use the same normalization. "котка" now correctly finds "cat", "гра́д" finds "city"/"hail", etc. 6 new regression tests added.
 - **EN→BG asymmetry for "кола" / "cab"**: WikiDict's reverse-mapping stored rank-prefixed headwords (`1:2cab`, `2:3car`) in the EN→BG SQLite, making them unreachable by binary search. `build_data.py` now strips `N:M` rank prefixes from `written_rep` (headwords) in addition to translation tokens, so "cab" → "кола" and "car" → "кола" are now correctly found.
 - **Correctness** `src/main.ts` — EN→BG sense line now shown when no BG word-details are available (was unconditionally hidden whenever `dir === 'en-bg'`, leaving users with zero context for words without BG metadata)

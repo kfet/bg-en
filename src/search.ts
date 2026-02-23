@@ -70,13 +70,9 @@ export async function loadDictionary(
     bgEnData = bg
     enBgData = en
     onProgress?.(100)
-  })()
+  })().catch((err) => { loadPromise = null; throw err })
 
   return loadPromise
-}
-
-export function isLoaded(): boolean {
-  return bgEnData !== null && enBgData !== null
 }
 
 // ── Case folding ──────────────────────────────────────────────────────────────
@@ -87,7 +83,7 @@ export function isLoaded(): boolean {
  * Bulgarian headwords (e.g. "ко́тка" → "котка") so that accent-free user
  * input matches accented dictionary headwords.
  */
-function fold(s: string): string {
+export function fold(s: string): string {
   return s.replace(/\u0301/g, '').toLowerCase()
 }
 

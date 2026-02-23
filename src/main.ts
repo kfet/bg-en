@@ -1,4 +1,4 @@
-import { loadDictionary, searchPrefix, detectDirection, getMeta, type Direction, type Entry } from './search'
+import { loadDictionary, searchPrefix, detectDirection, getMeta, fold, type Direction, type Entry } from './search'
 
 // ── Elements ────────────────────────────────────────────────────────────────
 
@@ -94,10 +94,16 @@ function escHtml(s: string): string {
 
 function highlightPrefix(word: string, prefix: string): string {
   if (!prefix) return escHtml(word)
-  if (word.toLowerCase().startsWith(prefix.toLowerCase())) {
-    return `<mark>${escHtml(word.slice(0, prefix.length))}</mark>${escHtml(word.slice(prefix.length))}`
+  const fw = fold(word), fp = fold(prefix)
+  if (!fw.startsWith(fp)) return escHtml(word)
+  // Walk the original string counting fp.length non-accent chars so that
+  // the split point is correct even when U+0301 sits between characters,
+  // e.g. "ко\u0301тка" with prefix "котка" → split after index 6 not 5.
+  let foldedCount = 0, splitIdx = 0
+  for (splitIdx = 0; splitIdx < word.length && foldedCount < fp.length; splitIdx++) {
+    if (word[splitIdx] !== '\u0301') foldedCount++
   }
-  return escHtml(word)
+  return `<mark>${escHtml(word.slice(0, splitIdx))}</mark>${escHtml(word.slice(splitIdx))}`
 }
 
 /**
