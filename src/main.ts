@@ -1,4 +1,5 @@
 import { loadDictionary, searchPrefix, detectDirection, getMeta, fold, type Direction, type Entry } from './search'
+import versionRaw from '../VERSION?raw'
 
 // ── Elements ────────────────────────────────────────────────────────────────
 
@@ -15,6 +16,9 @@ const installDismiss = document.getElementById('install-dismiss')  as HTMLButton
 const updateBanner   = document.getElementById('update-banner')    as HTMLDivElement
 const updateBtn      = document.getElementById('update-btn')       as HTMLButtonElement
 const offlineBanner  = document.getElementById('offline-banner')   as HTMLDivElement
+const appVersionEl   = document.getElementById('app-version')      as HTMLSpanElement
+
+if (appVersionEl) appVersionEl.textContent = `v${versionRaw.trim()}`
 
 // ── State ────────────────────────────────────────────────────────────────────
 

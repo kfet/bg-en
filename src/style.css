@@ -607,6 +607,12 @@ main {
   color: var(--color-primary);
 }
 
+.site-footer .app-version {
+  opacity: 0.6;
+  margin-left: 0.5rem;
+  font-family: monospace;
+}
+
 /* ── Empty state (T16 + T17 + T21) ──────────────────────────────────────── */
 
 .empty-state {
