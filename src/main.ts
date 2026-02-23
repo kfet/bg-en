@@ -244,7 +244,7 @@ function renderEntries(entries: Entry[], dir: Direction): void {
     const wiktUrl = `https://en.wiktionary.org/wiki/${encodeURIComponent(word)}`
     const shareUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(word)}`
 
-    html.push(`<article class="result-card" role="listitem">`)
+    html.push(`<article class="result-card">`)
 
     // ── Headword line ───────────────────────────────────────────────────────
     html.push(`<div class="headword-line">`)

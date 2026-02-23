@@ -12,12 +12,12 @@ export default defineConfig({
         runtimeCaching: [
           {
             urlPattern: /\/data\/(bg-en|en-bg)\.json$/,
-            handler: 'CacheFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'dict-data-v1',
               expiration: {
                 maxEntries: 2,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days max age
               },
             },
           },
