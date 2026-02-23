@@ -516,6 +516,27 @@ main {
   margin-top: 0.1rem;
 }
 
+/* BG word details block (shown in EN→BG results) */
+.bg-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  margin-top: 0.3rem;
+}
+
+.bg-detail-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.35rem;
+}
+
+.bg-detail-word {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
 /* Copy button */
 .copy-btn {
   background: none;
@@ -744,6 +765,7 @@ main {
   font-size: 0.82rem;
   font-weight: 500;
   letter-spacing: 0.01em;
+  position: relative;
   z-index: 9;
 }
 

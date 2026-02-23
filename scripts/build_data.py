@@ -33,6 +33,7 @@ import sqlite3
 import json
 import urllib.request
 import os
+import re
 
 VERSION     = "2025-11"
 BASE_URL    = f"https://download.wikdict.com/dictionaries/sqlite/2_{VERSION}"
@@ -78,6 +79,17 @@ POS_MAP = {
 
 def strip_accent(s: str) -> str:
     return s.replace(ACUTE, "")
+
+
+# WikiDict sometimes stores rank prefixes like "1:2" directly in trans_list
+# (e.g. "1:2cab | 2:3car" instead of "cab | car").  Strip them per token.
+_RANK_PREFIX = re.compile(r"^\d+:\d+")
+
+
+def clean_trans(raw: str) -> str:
+    """Remove WikiDict rank prefixes and return a clean ' | '-joined string."""
+    tokens = [_RANK_PREFIX.sub("", t).strip() for t in raw.split(" | ")]
+    return " | ".join(t for t in tokens if t)
 
 
 def extract_pos(lexentry: str) -> str:
@@ -441,7 +453,7 @@ def export_dataset(name: str, kaikki_index: dict, en_ipa: dict, en_morph: dict) 
     entries = []
     for written_rep, trans_list, all_senses, lexentry, _score in rows:
         pos   = extract_pos(lexentry or "")
-        trans = (trans_list  or "").strip()
+        trans = clean_trans(trans_list or "")
         sense = (all_senses  or "").strip()
         if sense:
             seen: list = []

@@ -81,7 +81,7 @@ function updateDirIndicator(): void {
 
 function posTag(pos: string): string {
   if (!pos) return ''
-  return `<span class="pos-tag">${POS_LABEL[pos] ?? pos}</span>`
+  return `<span class="pos-tag">${escHtml(POS_LABEL[pos] ?? pos)}</span>`
 }
 
 function escHtml(s: string): string {
@@ -190,7 +190,7 @@ function renderEmptyState(): void {
       const q = btn.dataset['search'] ?? ''
       if (!q) return
       searchInput.value = q
-      runSearch()
+      runSearch(true)
       searchInput.focus()
     })
   })
@@ -251,7 +251,7 @@ function renderEntries(entries: Entry[], dir: Direction): void {
 
     // Gender badge
     if (meta?.gender) {
-      html.push(`<span class="gender-badge">${GENDER_LABEL[meta.gender] ?? meta.gender}</span>`)
+      html.push(`<span class="gender-badge">${escHtml(GENDER_LABEL[meta.gender] ?? meta.gender)}</span>`)
     }
 
     // Aspect badge + paired form (BG verbs)
@@ -331,8 +331,33 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       )
       html.push(`</div>`) // .trans-main
 
-      // Sense / definition
-      if (cleanSense) {
+      // BG word details (gender, plural, aspect) — shown when searching EN→BG
+      if (dir === 'en-bg') {
+        const bgDetails: string[] = []
+        for (const t of translations) {
+          const bgMeta = getMeta(t, 'bg-en')
+          if (!bgMeta) continue
+          const parts: string[] = [`<span class="bg-detail-word">${escHtml(t)}</span>`]
+          if (bgMeta.ipa)    parts.push(`<span class="ipa">${escHtml(bgMeta.ipa)}</span>`)
+          if (bgMeta.gender) parts.push(`<span class="gender-badge">${escHtml(GENDER_LABEL[bgMeta.gender] ?? bgMeta.gender)}</span>`)
+          if (bgMeta.aspect) {
+            const aspLabel = bgMeta.aspect === 'impf' ? 'несв.' : 'св.'
+            parts.push(`<span class="aspect-badge">${aspLabel}</span>`)
+            if (bgMeta.paired) {
+              const pairedLabel = bgMeta.aspect === 'impf' ? 'св.:' : 'несв.:'
+              parts.push(`<span class="inflect">${pairedLabel} <em>${escHtml(bgMeta.paired)}</em></span>`)
+            }
+          }
+          if (bgMeta.pl) parts.push(`<span class="inflect">мн.: <em>${escHtml(bgMeta.pl)}</em></span>`)
+          if (parts.length > 1) bgDetails.push(`<span class="bg-detail-entry">${parts.join(' ')}</span>`)
+        }
+        if (bgDetails.length) {
+          html.push(`<div class="bg-details">${bgDetails.join('')}</div>`)
+        }
+      }
+
+      // Sense / definition (shown for BG→EN; hidden for EN→BG since BG details replace it)
+      if (cleanSense && dir !== 'en-bg') {
         const senses = cleanSense.split(' | ').map(s => s.trim()).filter(Boolean)
         if (senses.length === 1) {
           html.push(`<p class="sense">${escHtml(senses[0])}</p>`)
@@ -387,7 +412,7 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       const word = el.dataset['word'] ?? ''
       if (!word) return
       searchInput.value = word
-      runSearch()
+      runSearch(true)
       searchInput.focus()
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -415,7 +440,7 @@ function readUrlState(): string {
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-function runSearch(): void {
+function runSearch(saveToRecent = false): void {
   const query = searchInput.value.trim()
 
   // T18: page title tracks query
@@ -436,8 +461,8 @@ function runSearch(): void {
   pushUrlState(query)
   lastQuery = query
 
-  // T17: remember this search
-  addRecent(query)
+  // T17: remember this search (only on explicit submit)
+  if (saveToRecent) addRecent(query)
 
   renderEntries(searchPrefix(dir, query, 40), dir)
 }
@@ -448,7 +473,7 @@ searchInput.addEventListener('input', () => {
 })
 
 searchInput.addEventListener('keydown', (e: KeyboardEvent) => {
-  if (e.key === 'Enter') { if (searchTimer) clearTimeout(searchTimer); runSearch() }
+  if (e.key === 'Enter') { if (searchTimer) clearTimeout(searchTimer); runSearch(true) }
   if (e.key === 'Escape') {
     searchInput.value = ''
     dirIndicator.textContent = ''

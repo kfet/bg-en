@@ -148,6 +148,25 @@ for (let i = 1000; i < bgEn.entries.length; i += 1000) {
 }
 assert(globalSorted, "bg-en dataset is globally sorted (sampled)")
 
+// Check sorted order of en-bg dataset (sample every 1000th entry)
+let enGlobalSorted = true
+for (let i = 1000; i < enBg.entries.length; i += 1000) {
+  if (fold(enBg.entries[i][0]) < fold(enBg.entries[i-1][0])) { enGlobalSorted = false; break }
+}
+assert(enGlobalSorted, "en-bg dataset is globally sorted (sampled)")
+
+// Regression: no entry should have WikiDict rank prefixes (e.g. "1:2cab | 2:3car")
+// Build data pipeline must strip these via clean_trans() in build_data.py
+const rankPrefixRe = /^\d+:\d/
+const rankPrefixed = bgEn.entries.filter(e => e[1].split(' | ').some(t => rankPrefixRe.test(t)))
+assert(rankPrefixed.length === 0,
+  `no rank-prefixed translations (found: ${JSON.stringify(rankPrefixed.slice(0,3).map(e => [e[0], e[1]]))})`)
+
+const rankPrefixedEN = enBg.entries.filter(e => e[1].split(' | ').some(t => rankPrefixRe.test(t)))
+assert(rankPrefixedEN.length === 0,
+  `no rank-prefixed translations in en-bg (found: ${JSON.stringify(rankPrefixedEN.slice(0,3).map(e => [e[0], e[1]]))})`)
+
+
 // ── Summary ───────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(40)}`)
 console.log(`${pass + fail} tests: ${pass} passed, ${fail} failed`)

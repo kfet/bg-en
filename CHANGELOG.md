@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Data pipeline**: strip WikiDict rank-prefixes (e.g. `1:2cab | 2:3car` → `cab | car`) from
+  `trans_list` before saving to JSON. Added `clean_trans()` in `build_data.py` and patched
+  existing JSON data file. Regression test added to `test_search.mjs`.
+  Affected entry: `кола` (БГ→АН). (#bug reported by user)
+
+### Fixed
+- **Security** `src/main.ts` — gender badge fallback now wrapped with `escHtml()` for defence-in-depth (was only a theoretical risk since pipeline values are `m|f|n`)
+- **Security** `src/main.ts` — `posTag()` fallback value now wrapped with `escHtml()` for defence-in-depth
+- **Correctness** `src/main.ts` — `addRecent()` now only fires on explicit user actions (Enter key, example chip clicks, paired-word clicks), not on every 120 ms debounce tick during typing
+- **Correctness** `index.html` — added `apple-mobile-web-app-capable` and `apple-mobile-web-app-status-bar-style` meta tags for reliable `navigator.standalone` on iOS 14 and below
+- **Simplification** `src/style.css` — added `position: relative` to `.offline-banner` so `z-index: 9` is not a no-op
+
 ### Added (Phase 6 — T16–T22)
 - **T16** iOS "Add to Home Screen" hint on empty state — shown only on iOS Safari outside standalone mode; dismissible (persisted via `localStorage`)
 - **T17** Recent searches — tappable chips (up to 8) on the empty state, persisted via `localStorage`
@@ -12,6 +25,7 @@
 - **T22** Offline/online status banner — amber banner when `navigator.onLine` is false; auto-hides on reconnect
 - **iOS keyboard** — `autofocus` attribute + `pageshow` listener in iOS standalone mode raises keyboard on every app open (both fresh launch and resume from background)
 - **Documentation** — T16–T22 fully specified in `plan.md` Phase 6; `AGENTS.md` updated
+- **Test coverage** `scripts/test_search.mjs` — added sort-order assertion for en-bg dataset (now 40 tests)
 
 ## [0.1.0] - 2026-02-21
 
