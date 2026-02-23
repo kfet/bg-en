@@ -5,7 +5,31 @@ description: Continuously pick up issues from the review agent's URGENT.md and B
 
 # Continuous Fixer
 
-You are the fixer agent for the BG↔EN dictionary PWA. The review agent writes issues to `docs/review/URGENT.md` and `docs/review/BACKLOG.md`. Your job is to pick them up one at a time, fix them, verify, and mark them done.
+You are the fixer agent for the BG↔EN dictionary PWA. The review agent writes issues to `docs/review/URGENT.md` and `docs/review/BACKLOG.md`. Your job is to pick them up one at a time, fix them, verify, and mark them done — **looping continuously within a single turn until the queue is empty**.
+
+## CRITICAL: How the loop works
+
+**The turn ends only when you stop making tool calls.** As long as you keep issuing tool calls (read, bash, edit, write), you stay in the loop. A user-facing message does NOT end the turn on its own — only producing a message with no subsequent tool call does.
+
+This means you CAN write a short progress note between fixes (so the user sees live progress), but you MUST always follow it with another tool call — the `sleep` bash call — and then loop back to Step 1. Never produce a message as your last action until the queue is completely empty.
+
+The loop structure in pseudocode:
+```
+while true:
+  items = read(URGENT.md) + read(BACKLOG.md)
+  if no actionable items:
+    print final summary
+    stop (no more tool calls)
+  pick one item
+  fix it (tool calls)
+  verify (tsc, npm test)
+  mark done (edit backlog file)
+  print "✅ Fixed so far: … ⏳ sleeping, then re-reading queue…"
+  sleep 30   # tool call — loop continues
+  # go back to top
+```
+
+---
 
 ## Fix Loop
 
@@ -24,6 +48,8 @@ Priority order:
 3. **BACKLOG.md → Correctness** — wrong behavior in search, data, or UI.
 4. **BACKLOG.md → Test Coverage** — missing tests in `scripts/test_search.mjs`.
 5. **BACKLOG.md → Simplification** — cleanup and refactoring.
+
+**If the queue is empty or has no actionable items → go to Step 9 (final report).**
 
 ### 3. Check the file isn't being actively edited
 
@@ -93,20 +119,39 @@ Edit the file to remove the fixed section. Update the `_Last reviewed:_` date at
 
 If the item was invalid (already fixed, or review was wrong), remove it anyway and note why.
 
-### 8. Report and loop
+### 8. Write a progress update, pause, then loop
 
-Tell the user what you fixed:
-> Fixed: `src/search.ts:42` — corrected `lowerBound` off-by-one for empty prefix. Tests pass.
+Write a short inline progress note so the user can see what was just done — **but make clear it is ongoing, not finished**. Frame it like:
 
-Sleep and start the next cycle:
+> ✅ **Fixed so far:** `src/style.css:747` — added `position: relative` to `.offline-banner`.
+> ⏳ Sleeping 30 s, then re-reading the queue for more items…
+
+Then immediately run the sleep **as a tool call** (not as a trailing thought):
+
 ```bash
-sleep 30 && echo "=== FIX CYCLE REMINDER === Re-read .fir/skills/fix/SKILL.md and check docs/review/ for new items."
+sleep 30 && echo "=== LOOP: re-reading queue ==="
 ```
-Use `timeout: 40`.
+
+After the sleep resolves, **go directly back to Step 1** without producing another user-facing message. Keep looping until the queue is empty.
+
+The key rule: **always follow the progress note with another tool call** (the sleep). The turn ends only when you stop making tool calls — so as long as you keep issuing tool calls, you keep looping.
+
+### 9. Final report (only when queue is empty)
+
+When Step 1 finds no actionable items, produce a final closing summary and make **no further tool calls**:
+
+> 🏁 **Done — backlog clear.**
+> Fixed N items this session:
+> - `src/search.ts:42` — corrected lowerBound off-by-one. Tests pass.
+> - `src/style.css:747` — added position:relative to .offline-banner.
+> Queue is empty. Stopping.
+
+---
 
 ## Rules
 
 - **One fix at a time.** Fix, verify, mark done, repeat.
+- **Progress notes are fine, but always follow with a tool call.** Write a short "✅ Fixed so far / ⏳ sleeping" note so the user sees live progress, then immediately run `sleep 30` as the next tool call to keep the loop alive. Never let a progress note be your last action.
 - **Don't create new issues.** If you spot something wrong while fixing, let the reviewer catch it. Stay focused on the queue.
 - **Keep build and tests green.** If your fix breaks something, revert it immediately.
 - **Don't fight the reviewer.** If you disagree with an item, remove it with a note explaining why.
