@@ -133,7 +133,17 @@ def _multi_download(url: str, tmp: str, total: int, bar: tqdm, n: int) -> None:
         try:
             buf = bytearray()
             with requests.get(
-                url, headers={"Range": f"bytes={start}-{end}"}, stream=True, timeout=60
+                url,
+                headers={
+                    "Range": f"bytes={start}-{end}",
+                    # Disable transport compression: when the server returns
+                    # Content-Encoding: gzip on a 206 Partial Content, urllib3
+                    # tries to gzip-decode each range slice independently, which
+                    # fails because only byte 0 of the file has a gzip header.
+                    "Accept-Encoding": "identity",
+                },
+                stream=True,
+                timeout=60,
             ) as r:
                 r.raise_for_status()
                 for data in r.iter_content(_DL_READ_CHUNK):
@@ -173,7 +183,9 @@ def download_file(url: str, dest: str, label: str) -> str:
     total = -1
     supports_ranges = False
     try:
-        r = requests.head(url, timeout=10)
+        # Force identity encoding so content-length reflects the raw byte size
+        # we'll be slicing with Range requests (not a gzipped transfer size).
+        r = requests.head(url, headers={"Accept-Encoding": "identity"}, timeout=10)
         total = int(r.headers.get("content-length", -1))
         supports_ranges = r.headers.get("accept-ranges", "").lower() == "bytes"
     except Exception:
