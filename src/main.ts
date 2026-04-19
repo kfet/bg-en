@@ -524,6 +524,23 @@ document.addEventListener('keydown', (e: KeyboardEvent) => {
   }
 })
 
+// Home link (header title) — clear search and return to empty state
+const homeLink = document.getElementById('home-link') as HTMLAnchorElement | null
+if (homeLink) {
+  homeLink.addEventListener('click', (e: MouseEvent) => {
+    // Allow modifier-clicks / middle-click to behave normally (open in new tab etc.)
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+    e.preventDefault()
+    if (searchTimer) { clearTimeout(searchTimer); searchTimer = null }
+    searchInput.value = ''
+    dirIndicator.textContent = ''
+    pushUrlState('')
+    document.title = 'БГ–АН Речник'
+    renderEmptyState()
+    searchInput.focus()
+  })
+}
+
 // ── Progress bar ─────────────────────────────────────────────────────────────
 
 function setProgress(pct: number): void {
