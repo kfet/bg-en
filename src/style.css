@@ -525,6 +525,71 @@ main {
   margin-top: 0.1rem;
 }
 
+/* English gloss block — hidden by default in EN→BG cards, revealed by the
+   per-card "Show definition" toggle. Demoted styling makes it visually
+   subordinate to the BG translations. */
+.en-gloss,
+.en-gloss-list {
+  display: none;
+  margin-top: 0.25rem;
+}
+.result-card.show-defs .en-gloss,
+.result-card.show-defs .en-gloss-list {
+  display: block;
+}
+.en-gloss {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  opacity: 0.85;
+}
+.en-gloss-list {
+  padding-left: 1.4rem;
+  list-style: decimal;
+}
+.en-gloss-list .en-gloss {
+  display: list-item;
+  margin-top: 0.1rem;
+}
+
+/* "EN" language badge prefixed to each revealed gloss */
+.en-badge {
+  display: inline-block;
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 700;
+  padding: 0.05em 0.35em;
+  border-radius: 3px;
+  margin-right: 0.25em;
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+}
+
+/* Per-card "Show definition" toggle */
+.defs-toggle {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.25em 0.6em;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.defs-toggle:hover,
+.defs-toggle:focus-visible {
+  background: var(--color-border);
+  color: var(--color-text);
+  outline: none;
+}
+
 /* BG word details block (shown in EN→BG results) */
 .bg-details {
   display: flex;

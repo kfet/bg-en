@@ -608,6 +608,7 @@ function renderEntries(entries: Entry[], dir: Direction): void {
 
     // ── Meanings ────────────────────────────────────────────────────────────
     const numbered = group.length > 1
+    let hasGlossInCard = false
 
     group.forEach((entry, idx) => {
       const [, trans, sense, pos] = entry
@@ -691,14 +692,21 @@ function renderEntries(entries: Entry[], dir: Direction): void {
         }
       }
 
-      // Sense / definition — shown for BG→EN always; shown for EN→BG only when no BG details available
-      if (cleanSense && (dir !== 'en-bg' || bgDetails.length === 0)) {
+      // Sense / definition.
+      //   BG→EN: always rendered inline (it's the user's target language).
+      //   EN→BG: hidden by default — it's English prose, redundant with the
+      //          BG translations. Revealed per-card via a "Show definition"
+      //          toggle below.
+      if (cleanSense) {
         const senses = cleanSense.split(' | ').map(s => s.trim()).filter(Boolean)
+        const senseClass = dir === 'en-bg' ? 'en-gloss' : 'sense'
+        const listClass  = dir === 'en-bg' ? 'en-gloss-list' : 'sense-list'
+        if (dir === 'en-bg') hasGlossInCard = true
         if (senses.length === 1) {
-          html.push(`<p class="sense">${escHtml(senses[0])}</p>`)
+          html.push(`<p class="${senseClass}">${dir === 'en-bg' ? '<span class="en-badge">EN</span> ' : ''}${escHtml(senses[0])}</p>`)
         } else {
-          html.push(`<ol class="sense-list">`)
-          for (const s of senses) html.push(`<li class="sense">${escHtml(s)}</li>`)
+          html.push(`<ol class="${listClass}">`)
+          for (const s of senses) html.push(`<li class="${senseClass}">${dir === 'en-bg' ? '<span class="en-badge">EN</span> ' : ''}${escHtml(s)}</li>`)
           html.push(`</ol>`)
         }
       }
@@ -706,10 +714,28 @@ function renderEntries(entries: Entry[], dir: Direction): void {
       html.push(`</div>`) // .translation-row
     })
 
+    // Per-card "Show definition" toggle (EN→BG only, only if any row has a gloss)
+    if (dir === 'en-bg' && hasGlossInCard) {
+      html.push(`<button class="defs-toggle" data-action="toggle-defs" aria-expanded="false">Покажи определение / Show definition</button>`)
+    }
+
     html.push(`</article>`)
   }
 
   resultsEl.innerHTML = html.join('')
+
+  // ── "Show definition" toggle (EN→BG) ──────────────────────────────────────
+  resultsEl.querySelectorAll<HTMLButtonElement>('button[data-action="toggle-defs"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = btn.closest('.result-card')
+      if (!card) return
+      const expanded = card.classList.toggle('show-defs')
+      btn.setAttribute('aria-expanded', expanded ? 'true' : 'false')
+      btn.textContent = expanded
+        ? 'Скрий определение / Hide definition'
+        : 'Покажи определение / Show definition'
+    })
+  })
 
   // ── Copy buttons ──────────────────────────────────────────────────────────
   resultsEl.querySelectorAll<HTMLButtonElement>('.copy-btn').forEach(btn => {
