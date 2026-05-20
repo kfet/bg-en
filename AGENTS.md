@@ -24,8 +24,8 @@ bg-en/
 │   ├── main.ts            # UI: event handlers, rendering, PWA install/update
 │   └── style.css          # All styles — light + dark mode, mobile-first
 ├── scripts/
-│   ├── build_data.py      # Data pipeline: WikiDict SQLite + kaikki + ipa-dict → JSON
-│   ├── test_search.mjs    # Unit tests (run via `npm test`) — 39 assertions
+│   ├── build_data.py      # Data pipeline: WikiDict + kaikki + ipa-dict + UniMorph → JSON
+│   ├── test_search.mjs    # Unit tests (run via `npm test`)
 │   └── smoke_test.js      # Optional Playwright browser smoke test
 ├── public/
 │   ├── data/
@@ -61,7 +61,7 @@ npm run dev
 # Production build → dist/
 npm run build
 
-# Rebuild data files (downloads ~18 MB WikiDict SQLite + extras, ~5 min first run)
+# Rebuild data files (cold run streams ~3 GB kaikki English; cached later)
 uv run scripts/build_data.py
 
 # Optional Playwright smoke test (requires: npm i -D playwright; app served at :5177)
@@ -77,13 +77,14 @@ node scripts/smoke_test.js
 ```
 WikiDict SQLite (bg-en.sqlite3, en-bg.sqlite3)   ~18 MB download
   + kaikki.org Bulgarian JSONL                    Bulgarian IPA, gender, plural, aspect
-  + ipa-dict en_US                                English IPA
+  + ipa-dict en_US                                Primary English IPA
+  + kaikki.org English JSONL (~3 GB streamed)     Fallback English IPA
   + UniMorph eng                                  English irregular forms
           │
-          ▼  scripts/build_data.py  (~5 min, cached in scripts/.cache/)
+          ▼  scripts/build_data.py  (cold run streams ~3 GB; cached in scripts/.cache/)
           │
-public/data/bg-en.json   46k entries, ~4 MB uncompressed
-public/data/en-bg.json   65k entries, ~11 MB uncompressed
+public/data/bg-en.json   46k entries, ~2.8 MB uncompressed
+public/data/en-bg.json   65k entries, ~9.5 MB uncompressed
           │
           ▼  browser: src/search.ts
 Binary search (O log n) over sorted in-memory arrays
@@ -137,7 +138,7 @@ type WordMeta = {
 | Framework | Vite + vanilla TypeScript | Minimal bundle, no framework overhead |
 | PWA | vite-plugin-pwa (Workbox) | Pre-caching, auto-update, battle-tested |
 | Deployment | GitHub Pages via GitHub Actions | Free, HTTPS, no server |
-| Data committed? | No — generated in CI | SQLite is 18 MB, JSON is 15 MB — too large for git |
+| Data committed? | No — generated in CI | source/cache files are large; JSON is generated — avoid committing data blobs |
 
 ---
 

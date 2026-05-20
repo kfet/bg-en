@@ -52,7 +52,7 @@ const GENDER_LABEL: Record<string, string> = {
 // ── Domain / register labels ─────────────────────────────────────────────────
 // Maps English Wiktionary labels (lowercased, comma-split) → Bulgarian
 // abbreviations. Built from a frequency-sorted scan of all en→bg sense
-// strings; covers ~80% of label-token occurrences in the dataset. Tokens
+// strings; covers ~88% of label-token occurrences in the dataset. Tokens
 // not in this map are passed through unchanged. The literal "_" placeholder
 // that Wiktionary occasionally emits is dropped at render time.
 const DOMAIN_LABEL: Record<string, string> = {
@@ -614,12 +614,14 @@ function renderEntries(entries: Entry[], dir: Direction): void {
   const html: string[] = []
   html.push(`<p class="result-count">${escHtml(countLabel)} · ${escHtml(dirLabel)}</p>`)
 
+  let cardIdx = 0
   for (const [word, group] of grouped) {
     const meta    = getMeta(word, dir)
     const wiktUrl = `https://en.wiktionary.org/wiki/${encodeURIComponent(word)}`
     const shareUrl = `${window.location.origin}${window.location.pathname}?q=${encodeURIComponent(word)}`
+    const cardId   = `result-card-${cardIdx++}`
 
-    html.push(`<article class="result-card">`)
+    html.push(`<article class="result-card" id="${cardId}">`)
 
     // ── Headword line ───────────────────────────────────────────────────────
     html.push(`<div class="headword-line">`)
@@ -790,7 +792,7 @@ function renderEntries(entries: Entry[], dir: Direction): void {
 
     // Per-card "Show definition" toggle (EN→BG only, only if any row has a gloss)
     if (dir === 'en-bg' && hasGlossInCard) {
-      html.push(`<button class="defs-toggle" data-action="toggle-defs" aria-expanded="false">Покажи определение / Show definition</button>`)
+      html.push(`<button class="defs-toggle" data-action="toggle-defs" aria-expanded="false" aria-controls="${cardId}">Покажи определение / Show definition</button>`)
     }
 
     html.push(`</article>`)

@@ -41,15 +41,41 @@ jobs:
         if: steps.check.outputs.needs_update == 'true'
         env:
           LATEST: ${{ steps.check.outputs.latest }}
-          CURRENT: ${{ steps.check.outputs.current }}
         run: |
-          # Bump VERSION in build script
-          sed -i "s/VERSION     = \"$CURRENT\"/VERSION     = \"$LATEST\"/" \
-            scripts/build_data.py
+          # Bump VERSION and matching cache key. Use Python instead of sed so
+          # whitespace-only edits and platform-specific sed flags do not break
+          # the monthly updater.
+          python3 - <<'PY'
+          import os
+          import re
+          import sys
+          from pathlib import Path
 
-          # Bump matching cache key so CI downloads fresh data
-          sed -i "s/wikdict-kaikki-ipadict-unimorph-$CURRENT/wikdict-kaikki-ipadict-unimorph-$LATEST/" \
-            .github/workflows/deploy.yml
+          latest = os.environ['LATEST']
+
+          build = Path('scripts/build_data.py')
+          s = build.read_text()
+          s, n = re.subn(
+              r'VERSION\s*=\s*"[0-9]{4}-[0-9]{2}"',
+              f'VERSION = "{latest}"',
+              s,
+              count=1,
+          )
+          if n != 1:
+              sys.exit('failed to update VERSION in scripts/build_data.py')
+          build.write_text(s)
+
+          deploy = Path('.github/workflows/deploy.yml')
+          s = deploy.read_text()
+          s, n = re.subn(
+              r'wikdict-kaikki-ipadict-unimorph-kaikkien-[0-9]{4}-[0-9]{2}',
+              f'wikdict-kaikki-ipadict-unimorph-kaikkien-{latest}',
+              s,
+          )
+          if n < 1:
+              sys.exit('failed to update deploy.yml cache key')
+          deploy.write_text(s)
+          PY
 
           # Sanity-check that both substitutions landed
           grep "VERSION" scripts/build_data.py | head -1
@@ -77,8 +103,9 @@ jobs:
             - Cache key in `.github/workflows/deploy.yml`
 
             Merging triggers a full data rebuild — all source files
-            (WikiDict SQLite, kaikki.org Bulgarian dump, ipa-dict en_US,
-            UniMorph) are re-downloaded fresh because the cache key changes.
+            (WikiDict SQLite, kaikki.org Bulgarian and English extracts,
+            ipa-dict en_US, UniMorph) are re-downloaded or regenerated fresh
+            because the cache key changes.
 
             > **Note:** CI does not run automatically on PRs opened by
             > `GITHUB_TOKEN`. To verify the build before merging, push an

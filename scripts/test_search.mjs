@@ -162,13 +162,15 @@ const баба_meta = meta['баба']
 assert(баба_meta?.ipa && баба_meta.ipa.includes('['), `баба meta has IPA: ${JSON.stringify(баба_meta?.ipa)}`)
 assert(баба_meta?.gender === 'f', `баба meta has gender=f (got ${баба_meta?.gender})`)
 assert(баба_meta?.pl === 'баби', `баба meta has pl=баби (got ${баба_meta?.pl})`)
-// en-bg has IPA-only meta from ipa-dict
+// en-bg has English metadata from ipa-dict, kaikki English fallback, and Unimorph
 const enMeta = enBg.meta ?? {}
 assert(typeof enMeta === 'object', "en-bg has meta object")
 const enMetaCount = Object.keys(enMeta).length
-assert(enMetaCount > 10000, `en-bg meta has ${enMetaCount.toLocaleString()} IPA entries (>10k)`)
+assert(enMetaCount > 30000, `en-bg meta has ${enMetaCount.toLocaleString()} IPA/morphology entries (>30k)`)
 const house_meta = enMeta['house']
 assert(house_meta?.ipa?.startsWith('/'), `house meta has IPA: ${JSON.stringify(house_meta?.ipa)}`)
+const chamois_meta = enMeta['chamois']
+assert(chamois_meta?.ipa?.startsWith('/'), `chamois gets IPA from fallback data: ${JSON.stringify(chamois_meta?.ipa)}`)
 // Irregular forms
 const go_meta = enMeta['go']
 assert(go_meta?.past === 'went', `go meta past=went (got ${go_meta?.past})`)

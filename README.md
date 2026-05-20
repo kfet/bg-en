@@ -16,7 +16,7 @@ Installable offline PWA dictionary for Bulgarian ↔ English, powered by [WikiDi
 - 🔗 Shareable search links (`?q=WORD&dir=bg-en`)
 - 🏷️ POS badges — 11% bg→en, 95% en→bg coverage
 - 📊 Result count badge; "Show more" toggle for polysemous words
-- ~3.4 MB one-time download (gzip), cached by service worker
+- ~4.1 MB one-time download (gzip), cached by service worker
 
 ## Data
 
@@ -24,7 +24,8 @@ Installable offline PWA dictionary for Bulgarian ↔ English, powered by [WikiDi
 |---|---|---|
 | [WikiDict](https://www.wikdict.com) 2025-11 | Translation entries (bg→en, en→bg) | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) |
 | [kaikki.org](https://kaikki.org/dictionary/Bulgarian/) (Wiktionary extract) | Bulgarian IPA, gender, inflections | CC BY-SA 3.0 + GFDL |
-| [ipa-dict](https://github.com/open-dict-data/ipa-dict) en_US (cmudict-ipa) | English IPA pronunciations | MIT |
+| [ipa-dict](https://github.com/open-dict-data/ipa-dict) en_US (cmudict-ipa) | Primary English IPA pronunciations | MIT |
+| [kaikki.org](https://kaikki.org/dictionary/English/) English (Wiktionary extract) | Fallback English IPA for loanwords and other cmudict gaps | CC BY-SA 3.0 + GFDL |
 | [UniMorph eng](https://github.com/unimorph/eng) | English irregular plurals/verb forms | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) |
 
 All CC BY-SA 3.0 data is derived from [Wiktionary](https://en.wiktionary.org).

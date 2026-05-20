@@ -1,0 +1,227 @@
+# EN→BG Wiktionary domain-label frequency audit
+#
+# Generated from public/data/en-bg.json (WikiDict 2025-11) while sizing the
+# src/main.ts DOMAIN_LABEL table. Tokens are taken from leading parenthetical
+# sense labels, comma-split and lowercased. The UI maps common tokens to BG
+# abbreviations and passes long-tail unknown tokens through unchanged.
+#
+# total entries: 65560
+# sense occurrences with leading domain: 27828
+# unique tokens: 2659
+# top 200:
+# total token occurrences: 38759
+# top 50: 65.56% coverage
+# top 100: 76.26% coverage
+# top 120: 78.59% coverage
+# top 150: 81.27% coverage
+# top 200: 84.21% coverage
+5058	transitive
+2196	intransitive
+1636	uncountable
+1495	countable
+745	informal
+693	idiomatic
+684	historical
+655	slang
+579	us
+550	chiefly
+540	archaic
+524	obsolete
+496	_
+484	figuratively
+444	figurative
+398	dated
+383	medicine
+373	uk
+361	mathematics
+347	nautical
+341	computing
+338	by extension
+335	colloquial
+314	ambitransitive
+309	legal
+305	physics
+297	anatomy
+283	rare
+280	music
+265	military
+264	chemistry
+242	grammar
+225	now
+201	pathology
+201	in the plural
+197	or
+191	biology
+189	usually
+186	british
+185	botany
+185	derogatory
+178	often
+177	astronomy
+175	vulgar
+170	geometry
+158	christianity
+157	linguistics
+148	sports
+141	law
+133	politics
+132	geology
+131	sometimes
+128	pejorative
+126	canada
+122	also
+121	north america
+121	ireland
+121	australia
+114	architecture
+113	literary
+110	not comparable
+109	formal
+107	and
+106	finance
+106	of a person
+100	commonwealth
+98	religion
+93	philosophy
+92	greek mythology
+91	zoology
+88	greek god
+87	organic compound
+80	mineral
+79	offensive
+77	irish
+74	originally
+73	economics
+69	business
+69	psychology
+69	arithmetic
+67	geography
+65	especially
+65	philippines
+63	ergative
+63	mostly
+59	engineering
+59	internet
+58	constellation
+57	logic
+57	aviation
+56	new zealand
+54	attributive
+53	uncommon
+53	etc.
+53	proscribed
+53	automotive
+52	card games
+52	calculus
+51	humorous
+51	reflexive
+51	statistics
+50	poetic
+50	specifically
+49	islam
+48	genetics
+48	euphemistic
+48	electronics
+48	literally
+47	britain
+46	meteorology
+45	programming
+44	disease
+43	idiom
+42	american spelling
+41	biblical character
+41	physiology
+41	theology
+41	biochemistry
+41	cytology
+40	comparable
+40	printing
+40	cooking
+39	physical chemistry
+39	agriculture
+39	chess
+38	scotland
+38	organic chemistry
+38	biblical
+37	collective
+37	phonetics
+37	inorganic compound
+37	photography
+37	baseball
+36	manner
+36	nz
+36	typography
+36	dialectal
+34	electricity
+34	architectural element
+32	pharmaceutical drug
+31	algebra
+31	mythology
+30	video games
+30	soccer
+30	au
+30	computer hardware
+30	copulative
+29	rhetoric
+28	education
+28	relational
+28	musical instruments
+27	arts
+27	conjunctive
+27	judaism
+27	loosely
+27	analysis
+27	probability theory
+26	literature
+26	musical instrument
+26	astrology
+26	mildly
+26	this entry is a translation hub.
+25	nonstandard
+24	accounting
+24	government
+24	basketball
+23	capitalized
+23	heraldry
+23	ditransitive
+23	mining
+23	rail transport
+22	art
+22	psychiatry
+22	in plural
+22	broadly
+22	history
+22	sciences
+22	mechanics
+22	euphemism
+22	degree
+22	film
+22	rail
+21	stative
+21	of a
+21	math
+21	law enforcement
+21	computer science
+21	cricket
+20	surgery
+20	postpositive
+20	banking
+20	neurology
+20	set theory
+20	immunology
+20	inorganic chemistry
+20	attributively
+20	firearms
+20	games
+20	music genre
+19	poker
+19	pharmaceutical effect
+19	archaeology
+19	athletics
+19	in
+19	clothing
+19	roman god
+19	internet slang
+19	science fiction
+19	regional
+19	weightlifting
