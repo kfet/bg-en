@@ -9,6 +9,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# Opt every Node-based action into the Node 24 runtime. GitHub forces this
+# default in June 2026; setting it now silences the deprecation warning and
+# matches what the runner will use anyway.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   check-and-update:
     runs-on: ubuntu-latest
