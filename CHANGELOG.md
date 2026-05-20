@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Changed
+- **EN→BG: domain labels are now translated to Bulgarian** (`src/main.ts`). The leading parenthetical that Wiktionary stamps on senses — `(transitive)`, `(colloquial, Commonwealth)`, `(racquet sports, billiards)` — was previously rendered verbatim in English inside the `.domain-badge`. A new `DOMAIN_LABEL` table (~340 entries) maps the most common labels to Bulgarian abbreviations (прех., непрех., разг., мед., мат., биляр, …). The string is comma-split, each token is translated independently, unknown tokens pass through unchanged, and Wiktionary's `_` placeholder is dropped. The table was sized from a frequency-sort of all ~38k label-token occurrences in the en-bg dataset; it covers ~88% of occurrences.
+- **EN→BG: English gloss never shown inline; revealed by a per-card toggle** (`src/main.ts`, `src/style.css`). Previously the English Wiktionary gloss was rendered inline on rows where the BG translation lacked metadata (IPA/gender/aspect) — producing an inconsistency visible on `love`: senses 1–3 were BG-only but the English prose leaked through on senses 4 ('скъпа') and 6 ('нула'). The new rule is uniform: in EN→BG, the gloss is *never* shown inline. Each card with any gloss content gains a `Покажи определение / Show definition` toggle that reveals all glosses on demand; revealed glosses are demoted (smaller, italic, muted) and each item is prefixed with an `EN` language badge. BG→EN behaviour unchanged.
+
+### Added
+- **kaikki English IPA fallback** (`scripts/build_data.py`, `public/data/NOTICE`). The English IPA pipeline previously used only ipa-dict cmudict-ipa, which misses loanwords and many proper nouns (`chamois`, `beige`, `croissant`, `fjord`, `quinoa`, `sushi` had no IPA). Augmented with a stream-parsing pass over the kaikki.org English Wiktionary extract (~3 GB JSONL, streamed line-by-line, never persisted to disk; only a derived ~5 MB TSV is cached). cmudict-ipa retains priority (cleaner narrow transcription); kaikki only fills holes. After this change the en→bg dataset enrichment goes from 24,101 → 31,283 headwords with IPA. CI cache key bumped from `wikdict-kaikki-ipadict-unimorph-*` to `wikdict-kaikki-ipadict-unimorph-kaikkien-*`. NOTICE updated with the kaikki English attribution.
+
 ## [0.3.0] - 2026-02-22
 
 ### Added
