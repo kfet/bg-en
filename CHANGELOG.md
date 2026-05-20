@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-20
+
 ### Changed
 - **EN→BG: domain labels are now translated to Bulgarian** (`src/main.ts`). The leading parenthetical that Wiktionary stamps on senses — `(transitive)`, `(colloquial, Commonwealth)`, `(racquet sports, billiards)` — was previously rendered verbatim in English inside the `.domain-badge`. A new `DOMAIN_LABEL` table (~340 entries) maps the most common labels to Bulgarian abbreviations (прех., непрех., разг., мед., мат., биляр, …). The string is comma-split, each token is translated independently, unknown tokens pass through unchanged, and Wiktionary's `_` placeholder is dropped. The table was sized from a frequency-sort of all ~38k label-token occurrences in the en-bg dataset; it covers ~88% of occurrences.
 - **EN→BG: English gloss never shown inline; revealed by a per-card toggle** (`src/main.ts`, `src/style.css`). Previously the English Wiktionary gloss was rendered inline on rows where the BG translation lacked metadata (IPA/gender/aspect) — producing an inconsistency visible on `love`: senses 1–3 were BG-only but the English prose leaked through on senses 4 ('скъпа') and 6 ('нула'). The new rule is uniform: in EN→BG, the gloss is *never* shown inline. Each card with any gloss content gains a `Покажи определение / Show definition` toggle that reveals all glosses on demand; revealed glosses are demoted (smaller, italic, muted) and each item is prefixed with an `EN` language badge. BG→EN behaviour unchanged.
