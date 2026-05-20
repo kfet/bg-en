@@ -24,7 +24,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Verify deploy.yml cache key matches build_data.py VERSION
         run: |
@@ -43,19 +43,19 @@ jobs:
           fi
           echo "✓ Cache key matches: ${expected}"
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
         with:
           # build_data.py declares its deps via PEP 723 inline-script metadata;
           # invalidate the uv cache when that block changes (replaces the
           # default uv.lock / requirements*.txt glob, neither of which exist).
           cache-dependency-glob: scripts/build_data.py
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "20"
           cache: "npm"
@@ -64,7 +64,7 @@ jobs:
         run: npm ci
 
       - name: Cache WikiDict SQLite + kaikki BG/EN + ipa-dict + unimorph
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: scripts/.cache
           key: wikdict-kaikki-ipadict-unimorph-kaikkien-2025-11
@@ -79,7 +79,7 @@ jobs:
         run: npm run build
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: dist/
 
@@ -92,4 +92,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
