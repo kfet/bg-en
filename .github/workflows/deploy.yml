@@ -29,7 +29,7 @@ jobs:
           print(m.group(1))
           ")
           echo "build_data.py VERSION: $version"
-          expected="wikdict-kaikki-ipadict-unimorph-${version}"
+          expected="wikdict-kaikki-ipadict-unimorph-kaikkien-${version}"
           if ! grep -qF "key: ${expected}" .github/workflows/deploy.yml; then
             echo "ERROR: Cache key in deploy.yml must be '${expected}' to match VERSION in build_data.py"
             echo "       Update the 'key:' under 'Cache WikiDict SQLite' to match."
@@ -56,7 +56,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: scripts/.cache
-          key: wikdict-kaikki-ipadict-unimorph-2025-11
+          key: wikdict-kaikki-ipadict-unimorph-kaikkien-2025-11
 
       - name: Build data files
         run: uv run scripts/build_data.py

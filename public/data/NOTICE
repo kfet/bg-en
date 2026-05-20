@@ -35,3 +35,11 @@ Full licence text: https://creativecommons.org/licenses/by-sa/3.0/
    URL:     https://github.com/unimorph/eng
    Licence: CC BY-SA 3.0
    Source:  Derived from Wikipedia / Wiktionary.
+
+5. kaikki.org — English Wiktionary IPA  (fallback IPA for headwords missing
+                                          from cmudict-ipa, e.g. loanwords
+                                          like "chamois")
+   URL:     https://kaikki.org/dictionary/English/
+   Licence: CC BY-SA 3.0 + GFDL  (same as Wiktionary)
+   Source:  Structured data extracted from the English Wiktionary dump using
+            wiktextract (https://github.com/tatuylonen/wiktextract).

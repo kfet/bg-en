@@ -15,6 +15,8 @@ Downloads:
     en-bg.sqlite3 (~13.7 MB)  from WikiDict 2025-11
     kaikki-Bulgarian.jsonl (~120 MB) from kaikki.org  [bg-en: IPA/gender/inflections]
     ipa-en_US.txt (~3 MB)     from ipa-dict (en_US only; MIT)  [en-bg: IPA]
+    kaikki-English.jsonl (~3 GB, streamed; only a small TSV is cached)
+                              from kaikki.org  [en-bg: IPA fallback for loanwords]
     unimorph-eng.txt (~18 MB) from UniMorph/eng (CC BY-SA 3.0) [en-bg: irregular forms]
 
 Outputs:
@@ -47,6 +49,9 @@ VERSION = "2025-11"
 BASE_URL = f"https://download.wikdict.com/dictionaries/sqlite/2_{VERSION}"
 KAIKKI_URL = (
     "https://kaikki.org/dictionary/Bulgarian/kaikki.org-dictionary-Bulgarian.jsonl"
+)
+KAIKKI_EN_URL = (
+    "https://kaikki.org/dictionary/English/kaikki.org-dictionary-English.jsonl"
 )
 # en_US only — en_UK (ipacards, GPL 3.0) is excluded for licence compatibility
 IPA_EN_US = (
@@ -318,6 +323,90 @@ def build_en_ipa_index() -> dict:
                 if word not in index:
                     index[word] = parts[1].split(", ")[0]
     print(f"  [ipa-dict] {len(index):,} English words indexed (en_US)")
+    return index
+
+
+# ── English IPA fallback (kaikki English Wiktionary, ~3 GB streamed) ─────────
+
+
+def build_en_kaikki_ipa_index() -> dict:
+    """Stream the kaikki English JSONL → {word: ipa_string}.
+
+    The full JSONL is ~3 GB, so we never persist it.  Stream-parse line by
+    line, extracting only headword + first /…/ IPA (skipping rhymes/audio
+    entries), and write a small derived TSV to .cache/ for reuse.
+    Subsequent builds load the cached TSV directly.
+
+    This is used only as a *fallback* to ipa-dict cmudict (which is the
+    cleaner narrow transcription); kaikki fills holes for loanwords and
+    proper nouns that cmudict misses, e.g. "chamois".
+    """
+    cache_tsv = os.path.join(CACHE_DIR, "kaikki-en-ipa.tsv")
+    index: dict = {}
+
+    if os.path.exists(cache_tsv):
+        with open(cache_tsv, encoding="utf-8") as f:
+            for line in f:
+                parts = line.rstrip("\n").split("\t", 1)
+                if len(parts) == 2 and parts[0] not in index:
+                    index[parts[0]] = parts[1]
+        print(f"  [kaikki-en] {len(index):,} English IPA from cached TSV")
+        return index
+
+    print("  [kaikki-en] streaming kaikki English JSONL (~3 GB) …", flush=True)
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    tmp = cache_tsv + ".tmp"
+    bytes_seen = 0
+    lines_seen = 0
+    try:
+        with requests.get(
+            KAIKKI_EN_URL,
+            headers={"Accept-Encoding": "identity"},
+            stream=True,
+            timeout=120,
+        ) as r:
+            r.raise_for_status()
+            total = int(r.headers.get("content-length", 0))
+            with open(tmp, "w", encoding="utf-8") as out, tqdm(
+                total=total if total > 0 else None,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                desc="kaikki-en stream",
+                dynamic_ncols=True,
+            ) as bar:
+                for raw in r.iter_lines(decode_unicode=False, chunk_size=1 << 20):
+                    if not raw:
+                        continue
+                    bar.update(len(raw) + 1)  # +1 for the stripped newline
+                    bytes_seen += len(raw) + 1
+                    lines_seen += 1
+                    try:
+                        e = json.loads(raw)
+                    except Exception:
+                        continue
+                    word = e.get("word", "")
+                    if not word:
+                        continue
+                    key = word.lower()
+                    if key in index:
+                        continue  # first-wins (matches cmudict behaviour)
+                    for s in e.get("sounds", []):
+                        ipa = s.get("ipa", "")
+                        if ipa and "rhymes" not in s and "audio" not in s:
+                            index[key] = ipa
+                            out.write(f"{key}\t{ipa}\n")
+                            break
+    except Exception:
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise
+
+    os.rename(tmp, cache_tsv)
+    print(
+        f"  [kaikki-en] {len(index):,} English IPA extracted "
+        f"from {lines_seen:,} JSONL lines ({bytes_seen / (1 << 30):.2f} GB streamed)"
+    )
     return index
 
 
@@ -665,9 +754,22 @@ def main() -> None:
     kaikki_index = build_kaikki_index(kaikki_path)
     print()
 
-    # English: ipa-dict en_US only (MIT) + Unimorph (irregular forms, ~18 MB)
+    # English: ipa-dict en_US only (MIT) + kaikki English fallback (CC BY-SA)
+    #          + Unimorph (irregular forms, ~18 MB)
     print("--- ipa-dict (English IPA, en_US only — MIT) ---")
     en_ipa = build_en_ipa_index()
+    print()
+    print("--- kaikki English (IPA fallback for loanwords/proper nouns) ---")
+    en_ipa_kaikki = build_en_kaikki_ipa_index()
+    # Merge: cmudict (en_ipa) takes priority (cleaner narrow transcription);
+    # kaikki only fills holes.
+    filled = 0
+    for k, v in en_ipa_kaikki.items():
+        if k not in en_ipa:
+            en_ipa[k] = v
+            filled += 1
+    print(f"  [merge] {filled:,} headwords filled from kaikki; "
+          f"{len(en_ipa):,} total English IPA entries")
     print()
     print("--- unimorph (English irregular plurals / verb forms / comparatives) ---")
     en_morph = build_en_morph_index()
