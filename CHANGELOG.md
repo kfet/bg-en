@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- **App icons redrawn and made properly maskable** (`scripts/make_icons.sh`, `public/icons/`, `vite.config.ts`, `index.html`). The previous PNGs baked in their own rounded corners and transparent corner pixels, then declared `purpose: "any maskable"` on a non-maskable image — so iOS/Android applied a second mask over the top and Android adaptive masks risked clipping the glyphs. Icons are now drawn full-bleed from a single SVG master (`public/icons/icon.svg`) and split by purpose: `icon-192.png` + `icon-512.png` are `purpose: "any"`, and a new `icon-512-maskable.png` keeps the БГ↔АН glyphs inside the central ~78% safe zone for `purpose: "maskable"`. The `↔` arrow weight/colour now matches the letters instead of reading as a faint afterthought, and the gradient is reconciled to the `#1565c0` theme colour. A dedicated opaque `apple-touch-icon.png` (180×180, the Apple-recommended size, flattened so iOS never shows black behind transparency) replaces the reused 192px manifest icon. `scripts/make_icons.sh` regenerates the whole set via rsvg-convert + ImageMagick.
+
 ## [0.4.0] - 2026-05-20
 
 ### Changed

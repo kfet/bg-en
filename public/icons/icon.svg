@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1e88e5"/>
+      <stop offset="1" stop-color="#0d47a1"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="1024" height="1024" fill="url(#bg)"/>
+  <g transform="translate(512,512) scale(1.00) translate(-512,-512)">
+    <text x="512" y="412" text-anchor="middle"
+          font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="300"
+          letter-spacing="6" fill="#ffffff">БГ</text>
+    <!-- double-headed arrow, weight matched to the glyphs -->
+    <g stroke="#ffffff" stroke-width="30" stroke-linecap="round"
+       stroke-linejoin="round" fill="none">
+      <line x1="420" y1="512" x2="604" y2="512"/>
+      <polyline points="452,478 416,512 452,546"/>
+      <polyline points="572,478 608,512 572,546"/>
+    </g>
+    <text x="512" y="838" text-anchor="middle"
+          font-family="Helvetica Neue, Arial, sans-serif" font-weight="700" font-size="300"
+          letter-spacing="6" fill="#ffffff">АН</text>
+  </g>
+</svg>
