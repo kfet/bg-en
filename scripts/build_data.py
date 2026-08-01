@@ -45,7 +45,7 @@ import threading
 import requests
 from tqdm import tqdm
 
-VERSION = "2025-11"
+VERSION = "2026-06"
 BASE_URL = f"https://download.wikdict.com/dictionaries/sqlite/2_{VERSION}"
 KAIKKI_URL = (
     "https://kaikki.org/dictionary/Bulgarian/kaikki.org-dictionary-Bulgarian.jsonl"
