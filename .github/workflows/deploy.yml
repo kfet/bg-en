@@ -26,22 +26,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Verify deploy.yml cache key matches build_data.py VERSION
+      - name: Derive data cache key from build_data.py VERSION
+        id: datakey
         run: |
-          version=$(python3 -c "
-          import re, sys
-          m = re.search(r'VERSION\s*=\s*\"([^\"]+)\"', open('scripts/build_data.py').read())
-          if not m: sys.exit('VERSION not found in build_data.py')
-          print(m.group(1))
-          ")
-          echo "build_data.py VERSION: $version"
-          expected="wikdict-kaikki-ipadict-unimorph-kaikkien-${version}"
-          if ! grep -qF "key: ${expected}" .github/workflows/deploy.yml; then
-            echo "ERROR: Cache key in deploy.yml must be '${expected}' to match VERSION in build_data.py"
-            echo "       Update the 'key:' under 'Cache WikiDict SQLite' to match."
+          version=$(sed -n 's/^VERSION *= *"\(.*\)"/\1/p' scripts/build_data.py | head -1)
+          if [ -z "$version" ]; then
+            echo "VERSION not found in scripts/build_data.py" >&2
             exit 1
           fi
-          echo "✓ Cache key matches: ${expected}"
+          echo "build_data.py VERSION: $version"
+          echo "key=wikdict-kaikki-ipadict-unimorph-kaikkien-${version}" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-python@v6
         with:
@@ -67,7 +61,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: scripts/.cache
-          key: wikdict-kaikki-ipadict-unimorph-kaikkien-2025-11
+          key: ${{ steps.datakey.outputs.key }}
 
       - name: Build data files
         run: uv run scripts/build_data.py
